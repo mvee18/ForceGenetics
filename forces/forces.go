@@ -17,18 +17,18 @@ import (
 )
 
 // MutationRate is the rate of mutation
-var MutationRate = 0.0004
+// var MutationRate = 0.0004
 
 // PopSize is the size of the population (was 500)
-var PopSize = 300
+// var PopSize = 600
 
 // The number of atoms is critical to the size of the organism.
-var NumAtoms = 6
+// var NumAtoms = 6
 
 // Size of breeding pool (was 30)
-var PoolSize = 35
+// var PoolSize = 35
 
-var FitnessLimit = 1000.0
+// var FitnessLimit = 1.0
 
 var TargetFrequencies = []float64{
 	820.24, 804.08, 737.75,
@@ -239,9 +239,9 @@ func squareDifference(x, y float64) float64 {
 }
 
 func createPopulation() (population []Organism) {
-	population = make([]Organism, PopSize)
-	for i := 0; i < PopSize; i++ {
-		population[i] = CreateOrganism(NumAtoms)
+	population = make([]Organism, *PopSize)
+	for i := 0; i < *PopSize; i++ {
+		population[i] = CreateOrganism(*NumAtoms)
 	}
 	return
 }
@@ -252,8 +252,8 @@ func createPool(population []Organism, target []float64) (pool []Organism) {
 	sort.SliceStable(population, func(i, j int) bool {
 		return population[i].Fitness < population[j].Fitness
 	})
-	top := population[0 : PoolSize+1]
-	bottom := population[PoolSize+2:]
+	top := population[0 : *PoolSize+1]
+	bottom := population[*PoolSize+2:]
 
 	delBottomFolders(bottom)
 
@@ -266,7 +266,7 @@ func createPool(population []Organism, target []float64) (pool []Organism) {
 	}
 	// create a pool for next generation
 	for i := 0; i < len(top)-1; i++ {
-		num := (top[PoolSize].Fitness - top[i].Fitness)
+		num := (top[*PoolSize].Fitness - top[i].Fitness)
 		for n := 0.0; n < num; n++ {
 			pool = append(pool, top[i])
 		}
@@ -292,7 +292,7 @@ func naturalSelection(pool []Organism, population []Organism, target []float64) 
 		child := crossover(a, b)
 		child.mutate()
 
-		child.saveToFile(NumAtoms)
+		child.saveToFile(*NumAtoms)
 
 		child.calcFitness(target)
 
@@ -325,7 +325,7 @@ func crossover(d1 Organism, d2 Organism) Organism {
 
 func (o *Organism) mutate() {
 	for i := 0; i < len(o.DNA); i++ {
-		if rand.Float64() < MutationRate {
+		if rand.Float64() < *MutationRate {
 			o.DNA[i] = (rand.Float64())
 			if RandBool() {
 				o.DNA[i] = -o.DNA[i]
@@ -356,7 +356,7 @@ func main() {
 	for !found {
 		generation++
 		bestOrganism := getBest(population)
-		if bestOrganism.Fitness < FitnessLimit {
+		if bestOrganism.Fitness < *FitnessLimit {
 			found = true
 			fmt.Printf("The path to the best organism is %v\n", bestOrganism.Path)
 		} else {
