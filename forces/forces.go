@@ -20,13 +20,13 @@ import (
 var MutationRate = 0.0004
 
 // PopSize is the size of the population (was 500)
-var PopSize = 250
+var PopSize = 300
 
 // The number of atoms is critical to the size of the organism.
 var NumAtoms = 6
 
 // Size of breeding pool (was 30)
-var PoolSize = 30
+var PoolSize = 35
 
 var FitnessLimit = 1000.0
 
@@ -253,8 +253,7 @@ func createPool(population []Organism, target []float64) (pool []Organism) {
 		return population[i].Fitness < population[j].Fitness
 	})
 	top := population[0 : PoolSize+1]
-	bottom := population[PoolSize+1:]
-	fmt.Printf("The top size is %v, the bottom is %v, the total is %v\n", len(top), len(bottom), len(population))
+	bottom := population[PoolSize+2:]
 
 	delBottomFolders(bottom)
 
