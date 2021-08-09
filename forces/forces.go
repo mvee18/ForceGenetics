@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -31,11 +32,14 @@ import (
 // var FitnessLimit = 1.0
 
 var TargetFrequencies = []float64{
-	820.24, 804.08, 737.75,
-	580.87, 573.06, 525.60,
-	363.23, 274.64, 194.26,
-	170.33, 170.26, 0.34,
-	0.00, 0.00, 0.00,
+	//	820.24, 804.08, 737.75,
+	//	580.87, 573.06, 525.60,
+	//	363.23, 274.64, 194.26,
+	//	170.33, 170.26, 0.34,
+	//	0.00, 0.00, 0.00,
+	//	0.00, 0.00, 0.00,
+	3943.98, 3833.99, 1651.33,
+	0.02, 0.00, 0.00,
 	0.00, 0.00, 0.00,
 }
 
@@ -187,6 +191,7 @@ func (d *Organism) calcFitness(target []float64) {
 	}
 
 	firstLine := lxm[1:4]
+
 	secondLine := lxm[endBytes(lxm):]
 
 	fields := func(s []string) []string {
@@ -201,7 +206,13 @@ func (d *Organism) calcFitness(target []float64) {
 	trimFirst := fields(firstLine)
 	trimSecond := fields(secondLine)
 
-	newLXM := append(trimFirst, trimSecond...)
+	var newLXM []string
+
+	if !reflect.DeepEqual(trimFirst, trimSecond) {
+		newLXM = append(trimFirst, trimSecond...)
+	} else {
+		newLXM = trimFirst
+	}
 
 	var LXMfloat []float64
 
