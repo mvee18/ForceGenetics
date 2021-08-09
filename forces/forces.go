@@ -39,8 +39,6 @@ var TargetFrequencies = []float64{
 	0.00, 0.00, 0.00,
 }
 
-var PathToSpectro = "./spectro"
-
 // The organism is going to be the array of force constants.
 // We should be able to represent this as a one dimensions array,
 // then reconstruct it to run it in spectro.
@@ -131,12 +129,12 @@ func (d *Organism) calcFitness(target []float64) {
 		log.Fatalf("Error opening file of path, %v\n", err)
 	}
 
-	input, err := os.Open("./spectro.in")
+	input, err := os.Open(*PathToSpectroIn)
 	if err != nil {
 		log.Fatalf("Error opening file of spectro in, %v\n", err)
 	}
 
-	spectroAbs, err := filepath.Abs(PathToSpectro)
+	spectroAbs, err := filepath.Abs(*PathToSpectro)
 	if err != nil {
 		log.Fatalf("Error finding abs path, %v\n", err)
 	}
@@ -253,9 +251,7 @@ func createPool(population []Organism, target []float64) (pool []Organism) {
 		return population[i].Fitness < population[j].Fitness
 	})
 	top := population[0 : *PoolSize+1]
-	bottom := population[*PoolSize+2:]
-
-	delBottomFolders(bottom)
+	// bottom := population[*PoolSize+2:]
 
 	// if there is no difference between the top  organisms, the population is stable
 	// and we can't get generate a proper breeding pool so we make the pool equal to the
@@ -274,9 +270,13 @@ func createPool(population []Organism, target []float64) (pool []Organism) {
 	return
 }
 
-func delBottomFolders(o []Organism) {
+func delFolders(o []Organism, topOrganism Organism) {
 	for _, v := range o {
-		defer os.RemoveAll(path.Dir(v.Path))
+		if v.Path == topOrganism.Path {
+			continue
+		} else {
+			os.RemoveAll(path.Dir(v.Path))
+		}
 	}
 }
 
@@ -346,6 +346,24 @@ func getBest(population []Organism) Organism {
 	return population[index]
 }
 
+var OutputPath string
+
+func init() {
+	outputPath, err := filepath.Abs(*OutFile)
+	if err != nil {
+		log.Fatalf("Error in getting output path, %v\n", err)
+	}
+
+	OutputPath = outputPath
+
+	f, err := os.Create(OutputPath)
+	if err != nil {
+		log.Fatalf("Error generating output file, %v\n", err)
+	}
+
+	defer f.Close()
+}
+
 func main() {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -364,9 +382,24 @@ func main() {
 			population = naturalSelection(pool, population, TargetFrequencies)
 			if generation%10 == 0 {
 				sofar := time.Since(start)
-				fmt.Printf("The path to the best organism is %v\n", bestOrganism.Path)
-				fmt.Printf("\nTime taken so far: %s | generation: %d | fitness: %f | pool size: %d", sofar, generation, bestOrganism.Fitness, len(pool))
+
+				summaryStep := fmt.Sprintf("The path to the best organism is %v.\n \nTime taken so far: %s | generation: %d | fitness: %f | pool size: %d\n", bestOrganism.Path, sofar, generation, bestOrganism.Fitness, len(pool))
+
+				f, err := os.OpenFile(OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+				if err != nil {
+					panic(err)
+				}
+
+				defer f.Close()
+
+				if _, err = f.WriteString(summaryStep); err != nil {
+					panic(err)
+				}
+
 			}
+
+			delFolders(pool, bestOrganism)
+			delFolders(population, bestOrganism)
 		}
 
 	}
