@@ -109,7 +109,7 @@ func (d *Organism) saveToFile(natoms int) error {
 
 	// Now we need to format the file correctly.
 	// Spectro is 20.12f
-	fmt.Fprintf(organismFile, "%5d%5d", natoms, natoms*natoms)
+	fmt.Fprintf(organismFile, "%5d%5d", natoms, 2*natoms*natoms)
 	for i := range d.DNA {
 		if i%3 == 0 {
 			fmt.Fprintf(organismFile, "\n")
@@ -119,6 +119,8 @@ func (d *Organism) saveToFile(natoms int) error {
 	organismFile.Write([]byte("\n"))
 
 	d.Path = organismFile.Name()
+
+	organismFile.Close()
 
 	return nil
 }
@@ -133,10 +135,14 @@ func (d *Organism) calcFitness(target []float64) {
 		log.Fatalf("Error opening file of path, %v\n", err)
 	}
 
+	defer f.Close()
+
 	input, err := os.Open(*PathToSpectroIn)
 	if err != nil {
 		log.Fatalf("Error opening file of spectro in, %v\n", err)
 	}
+
+	defer input.Close()
 
 	spectroAbs, err := filepath.Abs(*PathToSpectro)
 	if err != nil {
@@ -372,7 +378,7 @@ func init() {
 		log.Fatalf("Error generating output file, %v\n", err)
 	}
 
-	defer f.Close()
+	f.Close()
 }
 
 func main() {
@@ -401,20 +407,30 @@ func main() {
 					panic(err)
 				}
 
-				defer f.Close()
-
 				if _, err = f.WriteString(summaryStep); err != nil {
 					panic(err)
 				}
 
+				f.Close()
 			}
 
 			delFolders(pool, bestOrganism)
 			delFolders(population, bestOrganism)
+
+			fmt.Println("The number of open files is:", countOpenFiles())
 		}
 
 	}
 
 	elapsed := time.Since(start)
 	fmt.Printf("\nTotal time taken: %s\n", elapsed)
+}
+
+func countOpenFiles() int64 {
+	out, err := exec.Command("/bin/sh", "-c", fmt.Sprintf("lsof -p %v", os.Getpid())).Output()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	lines := strings.Split(string(out), "\n")
+	return int64(len(lines) - 1)
 }
