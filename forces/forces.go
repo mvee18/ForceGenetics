@@ -340,12 +340,18 @@ func crossover(d1 Organism, d2 Organism) Organism {
 	return child
 }
 
+// Mutation function is unclear. I had it previously generate a new random number, but now it'll add or subtract.
 func (o *Organism) mutate() {
 	for i := 0; i < len(o.DNA); i++ {
-		if rand.Float64() < *MutationRate {
-			o.DNA[i] = (rand.Float64())
+		chance := rand.Float64()
+		if chance < *MutationRate {
+			o.DNA[i] += rand.Float64()
 			if RandBool() {
-				o.DNA[i] = -o.DNA[i]
+				o.DNA[i] -= rand.Float64()
+			}
+
+			if chance <= *ZeroChance {
+				o.DNA[i] = 0.0
 			}
 		}
 	}
@@ -416,8 +422,6 @@ func main() {
 
 			delFolders(pool, bestOrganism)
 			delFolders(population, bestOrganism)
-
-			fmt.Println("The number of open files is:", countOpenFiles())
 		}
 
 	}
@@ -426,6 +430,7 @@ func main() {
 	fmt.Printf("\nTotal time taken: %s\n", elapsed)
 }
 
+/*
 func countOpenFiles() int64 {
 	out, err := exec.Command("/bin/sh", "-c", fmt.Sprintf("lsof -p %v", os.Getpid())).Output()
 	if err != nil {
@@ -434,3 +439,4 @@ func countOpenFiles() int64 {
 	lines := strings.Split(string(out), "\n")
 	return int64(len(lines) - 1)
 }
+*/
