@@ -234,9 +234,9 @@ func (d *Organism) calcFitness(target []float64) {
 	fitness := calcDifference(LXMfloat)
 	if fitness == 0 {
 		d.Fitness = 1
+	} else {
+		d.Fitness = fitness
 	}
-
-	d.Fitness = fitness
 }
 
 func calcDifference(lxm []float64) float64 {
@@ -245,7 +245,7 @@ func calcDifference(lxm []float64) float64 {
 		d += squareDifference(v, TargetFrequencies[i])
 	}
 
-	return math.Sqrt(float64(d))
+	return math.Sqrt(d)
 }
 
 func squareDifference(x, y float64) float64 {
@@ -344,10 +344,10 @@ func crossover(d1 Organism, d2 Organism) Organism {
 func (o *Organism) mutate() {
 	for i := 0; i < len(o.DNA); i++ {
 		chance := rand.Float64()
-		if chance < *MutationRate {
-			o.DNA[i] += rand.Float64()
+		if chance <= *MutationRate {
+			o.DNA[i] = rand.Float64()
 			if RandBool() {
-				o.DNA[i] -= rand.Float64()
+				o.DNA[i] = -o.DNA[i]
 			}
 
 			if chance <= *ZeroChance {
@@ -399,7 +399,20 @@ func main() {
 		bestOrganism := getBest(population)
 		if bestOrganism.Fitness < *FitnessLimit {
 			found = true
-			fmt.Printf("The path to the best organism is %v\n", bestOrganism.Path)
+
+			f, err := os.OpenFile(OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+			if err != nil {
+				panic(err)
+			}
+
+			foundString := fmt.Sprintf("The path to the best organism is %v\n", bestOrganism.Path)
+
+			if _, err = f.WriteString(foundString); err != nil {
+				panic(err)
+			}
+
+			f.Close()
+
 		} else {
 			pool := createPool(population, TargetFrequencies)
 			population = naturalSelection(pool, population, TargetFrequencies)
