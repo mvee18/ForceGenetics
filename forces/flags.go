@@ -1,12 +1,15 @@
 package main
 
-import "flag"
+import (
+	"flag"
+	"fmt"
+)
 
 var (
 	MutationRate    = flag.Float64("mut", 0.04, "mutation rate as a decimal")
 	PopSize         = flag.Int("pop", 600, "population size")
 	NumAtoms        = flag.Int("n", 6, "number of atoms")
-	PoolSize        = flag.Int("pool", 35, "size of the the pool")
+	PoolSize        = flag.Float64("pool", 0.50, "fraction size of the the previous generation that survives")
 	FitnessLimit    = flag.Float64("f", 10.0, "fitness criteria")
 	OutFile         = flag.String("o", "forces.out", "name of output file")
 	PathToSpectro   = flag.String("sp", "./spectro", "path/to/spectro")
@@ -16,4 +19,5 @@ var (
 
 func init() {
 	flag.Parse()
+	fmt.Printf("The pop size is %d, the pool size is %f\n", *PopSize, *PoolSize)
 }

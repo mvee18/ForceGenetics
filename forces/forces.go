@@ -125,6 +125,38 @@ func (d *Organism) saveToFile(natoms int) error {
 	return nil
 }
 
+func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
+	err := os.MkdirAll(filePath, 0700)
+	if err != nil {
+		log.Fatalf("Could not open temp dir, %v\n", err)
+		return err
+	}
+
+	tempfn := path.Join(filePath, "fort.15")
+	organismFile, err := os.Create(tempfn)
+	if err != nil {
+		log.Fatalf("Could not open temp file, %v\n", err)
+		return err
+	}
+
+	// Now we need to format the file correctly.
+	// Spectro is 20.12f
+	fmt.Fprintf(organismFile, "%5d%5d", natoms, 6*natoms)
+	for i := range d.DNA {
+		if i%3 == 0 {
+			fmt.Fprintf(organismFile, "\n")
+		}
+		fmt.Fprintf(organismFile, "%20.10f", d.DNA[i])
+	}
+	organismFile.Write([]byte("\n"))
+
+	d.Path = organismFile.Name()
+
+	organismFile.Close()
+
+	return nil
+}
+
 // To calculate the fitness, we must run it through spectro.
 // We can save the results to a temp file and get a difference.
 // The smaller the differences, the greater the fitness (1/difference).
@@ -267,23 +299,45 @@ func createPool(population []Organism, target []float64) (pool []Organism) {
 	sort.SliceStable(population, func(i, j int) bool {
 		return population[i].Fitness < population[j].Fitness
 	})
-	top := population[0 : *PoolSize+1]
+	// This is what fraction survives to the next generation.
+	//	fmt.Println("length population, ", len(population))
+	fraction := *PoolSize * float64(*PopSize)
+
+	top := population[0:int(fraction)]
+
+	fmt.Println("The top fitness is, and the least is:", top[0].Fitness, top[len(top)-1].Fitness)
+	//	fmt.Println("Path to top is: ", top[0].Path)
+
 	// bottom := population[*PoolSize+2:]
 
 	// if there is no difference between the top  organisms, the population is stable
 	// and we can't get generate a proper breeding pool so we make the pool equal to the
 	// population and reproduce the next generation
-	if top[len(top)-1].Fitness-top[0].Fitness == 0 {
-		pool = population
-		return
-	}
-	// create a pool for next generation
-	for i := 0; i < len(top)-1; i++ {
-		num := (top[*PoolSize].Fitness - top[i].Fitness)
-		for n := 0.0; n < num; n++ {
-			pool = append(pool, top[i])
+
+	// This might be necessary?
+	/*
+		if top[len(top)-1].Fitness-top[0].Fitness == 0 {
+			pool = population
+			return
 		}
-	}
+	*/
+
+	// create a pool for next generation
+	/*
+		for i := 0; i < len(top)-1; i++ {
+			num := (top[*PoolSize].Fitness - top[i].Fitness)
+			fmt.Println("num: ", num)
+			for n := int64(0); n < int64(num); n++ {
+				pool = append(pool, top[i])
+			}
+		}
+	*/
+
+	// We take the top 50% of organisms, as prescribed in Haupt and Haupt p. 54.
+	pool = append(pool, top...)
+
+	//	fmt.Println("The length of the pool is", len(pool))
+
 	return
 }
 
@@ -298,10 +352,17 @@ func delFolders(o []Organism, topOrganism Organism) {
 }
 
 // perform natural selection to create the next generation
+// We should use a weighted method.
 func naturalSelection(pool []Organism, population []Organism, target []float64) []Organism {
-	next := make([]Organism, len(population))
+	next := make([]Organism, len(population)-len(pool))
 
-	for i := 0; i < len(population); i++ {
+	children := append(pool, next...)
+
+	fmt.Println("The original length of next is: ", len(children))
+
+	fmt.Printf("Length of pop minus pool is %v\n", len(population)-len(pool))
+
+	for i := len(pool); i < len(population); i++ {
 		r1, r2 := rand.Intn(len(pool)), rand.Intn(len(pool))
 		a := pool[r1]
 		b := pool[r2]
@@ -313,12 +374,16 @@ func naturalSelection(pool []Organism, population []Organism, target []float64) 
 
 		child.calcFitness(target)
 
-		next[i] = child
+		children[i] = child
 	}
-	return next
+
+	fmt.Println("The length of next is: ", len(children))
+	return children
 }
 
 // crosses over 2 Organism strings
+// We should use the blending method prescribed in Haupt and Haupt.
+// Furthermore, each cross should produce two offspring.
 func crossover(d1 Organism, d2 Organism) Organism {
 	childDNA := make([]float64, len(d1.DNA))
 	child := Organism{
@@ -327,17 +392,39 @@ func crossover(d1 Organism, d2 Organism) Organism {
 		Fitness: 0,
 	}
 
+	// Points to the left come from the first parent.
+	// Points to the right come from the other parent.
+	// Points in the middle are blended.
+
 	mid := rand.Intn(len(d1.DNA))
 	for i := 0; i < len(d1.DNA); i++ {
-		if i > mid {
+		if i < mid {
 			child.DNA[i] = d1.DNA[i]
-		} else {
+		} else if i > mid {
 			child.DNA[i] = d2.DNA[i]
+		} else if i == mid {
+			child.DNA[i] = crossOverA(d1.DNA[i], d2.DNA[i])
 		}
-
 	}
 
 	return child
+}
+
+// Where m is the mother chromosome and d is the father chromosome.
+func crossOverA(m float64, d float64) float64 {
+	// CrossoverPoint
+	beta := rand.Float64()
+	pNew := m - beta*m + beta*d
+
+	return pNew
+}
+
+func crossOverB(m float64, d float64) float64 {
+	// CrossoverPoint
+	beta := rand.Float64()
+	pNew := m + beta*m - beta*d
+
+	return pNew
 }
 
 // Mutation function is unclear. I had it previously generate a new random number, but now it'll add or subtract.
@@ -358,15 +445,11 @@ func (o *Organism) mutate() {
 }
 
 func getBest(population []Organism) Organism {
-	best := 0.0
-	index := 0
-	for i := 0; i < len(population); i++ {
-		if population[i].Fitness > best {
-			index = i
-			best = population[i].Fitness
-		}
-	}
-	return population[index]
+	sort.SliceStable(population, func(i, j int) bool {
+		return population[i].Fitness < population[j].Fitness
+	})
+
+	return population[0]
 }
 
 var OutputPath string
@@ -385,6 +468,15 @@ func init() {
 	}
 
 	f.Close()
+
+	if os.Stat("best"); !os.IsNotExist(err) {
+		os.RemoveAll("best")
+	}
+
+	err = os.Mkdir("best", 0700)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
@@ -413,6 +505,17 @@ func main() {
 
 			f.Close()
 
+			bestPath := "best/final"
+			bestErr := bestOrganism.SaveBestOrganism(*NumAtoms, bestPath)
+			if bestErr != nil {
+				fmt.Printf("Erro saving best organism, %v\n", err)
+			}
+
+			elapsed := time.Since(start)
+			fmt.Printf("\nTotal time taken: %s\n", elapsed)
+
+			return
+
 		} else {
 			pool := createPool(population, TargetFrequencies)
 			population = naturalSelection(pool, population, TargetFrequencies)
@@ -431,6 +534,12 @@ func main() {
 				}
 
 				f.Close()
+
+				bestPath := fmt.Sprintf("best/%d", generation)
+				bestErr := bestOrganism.SaveBestOrganism(*NumAtoms, bestPath)
+				if bestErr != nil {
+					fmt.Printf("Erro saving best organism, %v\n", err)
+				}
 			}
 
 			delFolders(pool, bestOrganism)
@@ -439,8 +548,6 @@ func main() {
 
 	}
 
-	elapsed := time.Since(start)
-	fmt.Printf("\nTotal time taken: %s\n", elapsed)
 }
 
 /*
