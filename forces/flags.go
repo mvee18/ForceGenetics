@@ -15,6 +15,7 @@ var (
 	PathToSpectro   = flag.String("sp", "./spectro", "path/to/spectro")
 	PathToSpectroIn = flag.String("i", "./spectro.in", "path/to/spectro.in")
 	ZeroChance      = flag.Float64("z", 0.02, "chance mutation will set value to zero instead of adding/subtracting")
+	TournamentPool  = flag.Int("t", 3, "the number of chromosomes selected to compete to be parents")
 )
 
 func init() {

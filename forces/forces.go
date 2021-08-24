@@ -32,12 +32,12 @@ import (
 // var FitnessLimit = 1.0
 
 var TargetFrequencies = []float64{
-	//	820.24, 804.08, 737.75,
-	//	580.87, 573.06, 525.60,
-	//	363.23, 274.64, 194.26,
-	//	170.33, 170.26, 0.34,
-	//	0.00, 0.00, 0.00,
-	//	0.00, 0.00, 0.00,
+	//820.24, 804.08, 737.75,
+	//580.87, 573.06, 525.60,
+	//363.23, 274.64, 194.26,
+	//170.33, 170.26, 0.34,
+	//0.00, 0.00, 0.00,
+	//0.00, 0.00, 0.00,
 	3943.98, 3833.99, 1651.33,
 	0.02, 0.00, 0.00,
 	0.00, 0.00, 0.00,
@@ -305,7 +305,7 @@ func createPool(population []Organism, target []float64) (pool []Organism) {
 
 	top := population[0:int(fraction)]
 
-	fmt.Println("The top fitness is, and the least is:", top[0].Fitness, top[len(top)-1].Fitness)
+	//fmt.Println("The top fitness is, and the least is:", top[0].Fitness, top[len(top)-1].Fitness)
 	//	fmt.Println("Path to top is: ", top[0].Path)
 
 	// bottom := population[*PoolSize+2:]
@@ -354,18 +354,23 @@ func delFolders(o []Organism, topOrganism Organism) {
 // perform natural selection to create the next generation
 // We should use a weighted method.
 func naturalSelection(pool []Organism, population []Organism, target []float64) []Organism {
+	// Children = [pool + empty slice]; len = population.
 	next := make([]Organism, len(population)-len(pool))
 
 	children := append(pool, next...)
 
-	fmt.Println("The original length of next is: ", len(children))
+	//fmt.Println("The original length of next is: ", len(children))
 
-	fmt.Printf("Length of pop minus pool is %v\n", len(population)-len(pool))
+	//fmt.Printf("Length of pop minus pool is %v\n", len(population)-len(pool))
 
 	for i := len(pool); i < len(population); i++ {
-		r1, r2 := rand.Intn(len(pool)), rand.Intn(len(pool))
-		a := pool[r1]
-		b := pool[r2]
+		/*
+			r1, r2 := rand.Intn(len(pool)), rand.Intn(len(pool))
+			a := pool[r1]
+			b := pool[r2]
+		*/
+
+		a, b := tournamentRound(pool)
 
 		child := crossover(a, b)
 		child.mutate()
@@ -377,8 +382,31 @@ func naturalSelection(pool []Organism, population []Organism, target []float64) 
 		children[i] = child
 	}
 
-	fmt.Println("The length of next is: ", len(children))
+	//fmt.Println("The length of next is: ", len(children))
 	return children
+}
+
+func tournamentRound(pool []Organism) (d Organism, m Organism) {
+	// This grabs three random organisms from the pool and sorts them.
+	makeBracket := func() []Organism {
+		round := make([]Organism, 0)
+
+		for i := 0; i < *TournamentPool; i++ {
+			index := rand.Intn(len(pool))
+			round = append(round, pool[index])
+			sort.SliceStable(round, func(i, j int) bool {
+				return round[i].Fitness < round[j].Fitness
+			})
+		}
+
+		return round
+	}
+
+	// This populates the slices a, b, which will be used in the next step.
+	a, b := makeBracket(), makeBracket()
+
+	// Since these slices are sorted, the first element is the most fit organism.
+	return a[0], b[0]
 }
 
 // crosses over 2 Organism strings
