@@ -31,6 +31,7 @@ import (
 
 // var FitnessLimit = 1.0
 
+/*
 var TargetFrequencies = []float64{
 	//820.24, 804.08, 737.75,
 	//580.87, 573.06, 525.60,
@@ -41,6 +42,13 @@ var TargetFrequencies = []float64{
 	3943.98, 3833.99, 1651.33,
 	0.02, 0.00, 0.00,
 	0.00, 0.00, 0.00,
+}
+*/
+
+var TargetFrequencies = []float64{
+	3943, 3832, 1649,
+	0, 0, 0,
+	0, 0, 0,
 }
 
 // The organism is going to be the array of force constants.
