@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -10,11 +11,10 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"reflect"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
+
+	"github.com/ntBre/chemutils/summarize"
 )
 
 // MutationRate is the rate of mutation
@@ -68,13 +68,25 @@ func RandBool() bool {
 func GetNumForceConstants(n int, dn int) int {
 	if dn == 2 {
 		return int(math.Pow(float64(n), 2)) * 3 * 3
+
+	} else if dn == 3 {
+		c := 0
+		for i := 0; i <= n*3-1; i++ {
+			for j := 0; j <= i; j++ {
+				for k := 0; k <= j; k++ {
+					c++
+				}
+			}
+		}
+		return c
+
 	} else {
 		return 0
 	}
 }
 
 func CreateOrganism(numAtoms int) (organism Organism) {
-	organismSize := GetNumForceConstants(numAtoms, 2)
+	organismSize := GetNumForceConstants(numAtoms, *DerivativeLevel)
 	ba := make([]float64, organismSize)
 	for i := 0; i < organismSize; i++ {
 		ba[i] = (rand.Float64())
@@ -102,13 +114,23 @@ func CreateOrganism(numAtoms int) (organism Organism) {
 // Before we can calc the fitness, we have to save the files so that spectro can use them.
 // Let's use temp files.
 func (d *Organism) saveToFile(natoms int) error {
+	fortFile := ""
+	switch *DerivativeLevel {
+	case 2:
+		fortFile = "fort.15"
+	case 3:
+		fortFile = "fort.30"
+	default:
+		panic("undefined case in save to file")
+	}
+
 	dir, err := ioutil.TempDir(".", "forceOrganisms")
 	if err != nil {
 		log.Fatalf("Could not open temp dir, %v\n", err)
 		return err
 	}
 
-	tempfn := path.Join(dir, "fort.15")
+	tempfn := path.Join(dir, fortFile)
 	organismFile, err := os.Create(tempfn)
 	if err != nil {
 		log.Fatalf("Could not open temp file, %v\n", err)
@@ -140,7 +162,17 @@ func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
 		return err
 	}
 
-	tempfn := path.Join(filePath, "fort.15")
+	fortFile := ""
+	switch *DerivativeLevel {
+	case 2:
+		fortFile = "fort.15"
+	case 3:
+		fortFile = "fort.30"
+	default:
+		panic("undefined case in save to file")
+	}
+
+	tempfn := path.Join(filePath, fortFile)
 	organismFile, err := os.Create(tempfn)
 	if err != nil {
 		log.Fatalf("Could not open temp file, %v\n", err)
@@ -200,78 +232,25 @@ func (d *Organism) calcFitness(target []float64) {
 		log.Fatalf("Error running cmd, %v\n", err)
 	}
 
-	outString := string(outBytes)
-	temp := strings.Split(outString, "\n")
+	ioutil.WriteFile("test.out", outBytes, 0777)
 
-	flag := false
-	lxmflag := false
-	var lxm []string
-	for _, v := range temp {
-		if lxmflag {
-			if flag {
-				if strings.Contains(v, "---") {
-					flag = false
-				} else {
-					lxm = append(lxm, v)
-				}
-
-			} else if strings.Contains(v, "") && !flag {
-				if strings.Contains(v, "---") {
-					lxmflag = false
-				} else {
-					lxm = append(lxm, v)
-				}
-			}
-		}
-
-		if strings.Contains(v, "LXM") {
-			flag = true
-			lxmflag = true
-			lxm = append(lxm, v)
-		}
-
+	switch *DerivativeLevel {
+	case 2:
+		parseOutputSecond(d, outBytes)
+	case 3:
+		parseOutputThird(d, outBytes)
+	default:
+		panic("undefined case in save to file")
 	}
+}
 
-	endBytes := func(list []string) int {
-		return len(list) - 4
-	}
+func parseOutputSecond(d *Organism, by []byte) {
+	r := bytes.NewReader(by)
+	result := summarize.Spectro(r)
 
-	firstLine := lxm[1:4]
+	fmt.Printf("%#v\n", result)
 
-	secondLine := lxm[endBytes(lxm):]
-
-	fields := func(s []string) []string {
-		var new []string
-		for _, v := range s {
-			new = strings.Fields(v)
-		}
-
-		return new
-	}
-
-	trimFirst := fields(firstLine)
-	trimSecond := fields(secondLine)
-
-	var newLXM []string
-
-	if !reflect.DeepEqual(trimFirst, trimSecond) {
-		newLXM = append(trimFirst, trimSecond...)
-	} else {
-		newLXM = trimFirst
-	}
-
-	var LXMfloat []float64
-
-	for _, v := range newLXM {
-		stringToFloat, err := strconv.ParseFloat(v, 64)
-		if err != nil {
-			log.Fatalf("error parsing float, %v\n", err)
-		}
-
-		LXMfloat = append(LXMfloat, stringToFloat)
-	}
-
-	fitness := calcDifference(LXMfloat)
+	fitness := calcDifference(result.Harm, TargetFrequencies)
 	if fitness == 0 {
 		d.Fitness = 1
 	} else {
@@ -279,10 +258,14 @@ func (d *Organism) calcFitness(target []float64) {
 	}
 }
 
-func calcDifference(lxm []float64) float64 {
+func parseOutputThird(d *Organism, by []byte) {
+
+}
+
+func calcDifference(gen []float64, target []float64) float64 {
 	var d float64
-	for i, v := range lxm {
-		d += squareDifference(v, TargetFrequencies[i])
+	for i, v := range gen {
+		d += squareDifference(v, target[i])
 	}
 
 	return math.Sqrt(d)

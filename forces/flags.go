@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"testing"
 )
 
 var (
@@ -16,9 +17,15 @@ var (
 	PathToSpectroIn = flag.String("i", "./spectro.in", "path/to/spectro.in")
 	ZeroChance      = flag.Float64("z", 0.02, "chance mutation will set value to zero instead of adding/subtracting")
 	TournamentPool  = flag.Int("t", 3, "the number of chromosomes selected to compete to be parents")
+	DerivativeLevel = flag.Int("d", 2, "this is the level of derivative")
 )
 
 func init() {
+	var _ = func() bool {
+		testing.Init()
+		return true
+	}()
+
 	flag.Parse()
 	fmt.Printf("The pop size is %d, the pool size is %f\n", *PopSize, *PoolSize)
 }

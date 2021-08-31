@@ -37,6 +37,24 @@ func TestCalcFitness(t *testing.T) {
 			t.Errorf("got %v, wanted %v\n", want, got)
 		}
 	})
+
+	t.Run("check 3rd rotational constants", func(t *testing.T) {
+		organism := Organism{
+			DNA:     nil,
+			Path:    "testfiles/h2o/3rd/fort.30",
+			Fitness: 0,
+		}
+
+		organism.calcFitness(TargetFrequencies)
+
+		want := 0.0
+		got := organism.Fitness
+
+		if got != want {
+			t.Errorf("got %v, wanted %v\n", want, got)
+		}
+
+	})
 }
 
 func TestCreatePopulation(t *testing.T) {
@@ -46,5 +64,26 @@ func TestCreatePopulation(t *testing.T) {
 		population := naturalSelection(pool, pop, TargetFrequencies)
 
 		fmt.Println(population)
+	})
+}
+
+func TestGetNumForceConstants(t *testing.T) {
+	t.Run("testing number of force constants for water", func(t *testing.T) {
+		got := GetNumForceConstants(3, 3)
+		want := 165
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+	})
+
+	t.Run("testing number for 6 atoms", func(t *testing.T) {
+		got := GetNumForceConstants(6, 3)
+		want := 1140
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
 	})
 }
