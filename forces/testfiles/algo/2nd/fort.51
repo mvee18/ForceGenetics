@@ -1,0 +1,17 @@
+                    ************SUM RULE SUMMARY************
+                                ----------------
+
+ 
+ 
+ A(AB)**2                : NOT OBEYED, DIFFERENCE = 3.0146026
+ 
+ 
+ 
+ 
+ 
+ A(CC)*ZETA(K,L,C)       : NOT OBEYED  K= 1  DIFFERENCE =-1.3944874
+ A(CC)*ZETA(K,L,C)       : NOT OBEYED  K= 2  DIFFERENCE =-2.4497006
+ A(CC)*ZETA(K,L,C)       : NOT OBEYED  K= 3  DIFFERENCE =-3.0431378
+ 
+
+                    ****************************************

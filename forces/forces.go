@@ -203,7 +203,7 @@ func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
 
 	// Now we need to format the file correctly.
 	// Spectro is 20.12f
-	fmt.Fprintf(organismFile, "%5d%5d", natoms, 6*natoms)
+	fmt.Fprintf(organismFile, "%5d%5d", natoms, GetNumForceConstants(natoms, *DerivativeLevel))
 	for i := range d.DNA {
 		if i%3 == 0 {
 			fmt.Fprintf(organismFile, "\n")

@@ -11,7 +11,7 @@ var (
 	PopSize         = flag.Int("pop", 600, "population size")
 	NumAtoms        = flag.Int("n", 6, "number of atoms")
 	PoolSize        = flag.Float64("pool", 0.50, "fraction size of the the previous generation that survives")
-	FitnessLimit    = flag.Float64("f", 10.0, "fitness criteria")
+	FitnessLimit    = flag.Float64("f", 1.0, "fitness criteria")
 	OutFile         = flag.String("o", "forces.out", "name of output file")
 	PathToSpectro   = flag.String("sp", "./spectro", "path/to/spectro")
 	PathToSpectroIn = flag.String("i", "./spectro.in", "path/to/spectro.in")
