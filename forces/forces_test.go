@@ -21,40 +21,42 @@ func TestCreateOrganism(t *testing.T) {
 }
 
 func TestCalcFitness(t *testing.T) {
-	t.Run("checking if LXM is correct for known fort.15", func(t *testing.T) {
+	t.Run("checking if LXM is correct for known fort.15 h2o", func(t *testing.T) {
 		organism := Organism{
 			DNA:     nil,
-			Path:    "testfiles/fort.15",
+			Path:    "testfiles/h2o/2nd/fort.15",
 			Fitness: 0,
 		}
 
 		organism.calcFitness(TargetFrequencies)
 
-		want := 0.0
+		want := 3.218
 		got := organism.Fitness
 
-		if got != want {
-			t.Errorf("got %v, wanted %v\n", want, got)
+		if got >= want {
+			t.Errorf("got %v, wanted %v\n", got, want)
 		}
 	})
 
-	t.Run("check 3rd rotational constants", func(t *testing.T) {
-		organism := Organism{
-			DNA:     nil,
-			Path:    "testfiles/h2o/3rd/fort.30",
-			Fitness: 0,
-		}
+	/*
+		t.Run("check 3rd rotational constants", func(t *testing.T) {
+			organism := Organism{
+				DNA:     nil,
+				Path:    "testfiles/h2o/3rd/fort.30",
+				Fitness: 0,
+			}
 
-		organism.calcFitness(TargetFrequencies)
+			organism.calcFitness(TargetFrequencies)
 
-		want := 0.0
-		got := organism.Fitness
+			want := 0.0
+			got := organism.Fitness
 
-		if got != want {
-			t.Errorf("got %v, wanted %v\n", want, got)
-		}
+			if got != want {
+				t.Errorf("got %v, wanted %v\n", want, got)
+			}
 
-	})
+		})
+	*/
 }
 
 func TestCreatePopulation(t *testing.T) {

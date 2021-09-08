@@ -50,6 +50,7 @@ func Spectro(r io.Reader) *Result {
 		geom     bool
 		fermi1   bool
 		fermi2   bool
+		lxm      bool
 		buf      bytes.Buffer
 		// this is cute
 		gparams = []string{"", "", "r", "<"}
@@ -60,6 +61,7 @@ func Spectro(r io.Reader) *Result {
 	phi := regexp.MustCompile(`(?i)phi (J|(JK)|(KJ)|K)`)
 	icn := regexp.MustCompile(`\([ 0-9]+\)\s+(BOND|ANGLE)`)
 	atom := regexp.MustCompile(`([0-9]+)\(([A-Za-z ]+)\)`)
+	lxmRE := regexp.MustCompile(`^(\s+[0-9]+\.[0-9]+)+$`)
 	for scanner.Scan() {
 		line = scanner.Text()
 		fields = strings.Fields(line)
@@ -69,6 +71,8 @@ func Spectro(r io.Reader) *Result {
 		case strings.Contains(line, "BAND CENTER ANALYSIS"):
 			skip += 3
 			harmFund = true
+			// reset harms after taking some from lxm
+			res.Harm = make([]float64, 0)
 		case harmFund && len(line) > 1:
 			if strings.Contains(line, "DUNHAM") ||
 				strings.Contains(line, "VIBRATIONAL ENERGY AND") {
@@ -148,6 +152,9 @@ func Spectro(r io.Reader) *Result {
 				}
 				state = append(state, f)
 			}
+		case strings.Contains(line, "ROTATIONAL ENERGY LEVEL ANALYSIS"):
+			rot = true
+			good = true
 		case good && strings.Contains(line, "BZA"):
 			rot = true
 			res.Lin = false
@@ -157,6 +164,13 @@ func Spectro(r io.Reader) *Result {
 			state = nil
 			rot = false
 			one = false
+			// sad hack, but I think the whole parser
+			// needs to be reworked to fix it. I can't
+			// remember how it all works together well
+			// enough
+			if len(fields) != 3 {
+				break
+			}
 			tmp := make([]float64, 0, 3)
 			for f := range fields {
 				v, err := strconv.ParseFloat(fields[f], 64)
@@ -238,6 +252,21 @@ func Spectro(r io.Reader) *Result {
 			fields := strings.Fields(line)
 			v, _ := strconv.ParseFloat(fields[2], 64)
 			res.Be = append(res.Be, v)
+		case strings.Contains(line, "LX MATRIX"):
+			lxm = true
+			skip += 2
+		case lxm && strings.Contains(line, "*******"):
+			lxm = false
+		case lxm && lxmRE.MatchString(line):
+			for _, f := range fields {
+				v, _ := strconv.ParseFloat(f, 64)
+				// arbitrary cutoff to avoid
+				// rotations/translations instead of
+				// counting how many freqs to expect
+				if math.Abs(v) > 1.0 {
+					res.Harm = append(res.Harm, v)
+				}
+			}
 		}
 		// TODO option for BZA and/or BZS
 		// TODO option for D in addition to DELTA

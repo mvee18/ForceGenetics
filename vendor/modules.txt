@@ -1,3 +1,3 @@
-# github.com/ntBre/chemutils v0.0.0-20210831180204-978c67b0b0b1
+# github.com/ntBre/chemutils v0.0.0-20210907115807-5214a013c51a
 ## explicit
 github.com/ntBre/chemutils/summarize

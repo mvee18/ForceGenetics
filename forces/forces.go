@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"math"
@@ -49,6 +50,12 @@ var TargetFrequencies = []float64{
 	3943, 3832, 1649,
 	0, 0, 0,
 	0, 0, 0,
+}
+
+var TargetRotational = []float64{
+	14.5054957,
+	9.2636424,
+	27.6557350,
 }
 
 // The organism is going to be the array of force constants.
@@ -115,19 +122,27 @@ func CreateOrganism(numAtoms int) (organism Organism) {
 // Let's use temp files.
 func (d *Organism) saveToFile(natoms int) error {
 	fortFile := ""
-	switch *DerivativeLevel {
-	case 2:
-		fortFile = "fort.15"
-	case 3:
-		fortFile = "fort.30"
-	default:
-		panic("undefined case in save to file")
-	}
 
 	dir, err := ioutil.TempDir(".", "forceOrganisms")
 	if err != nil {
 		log.Fatalf("Could not open temp dir, %v\n", err)
 		return err
+	}
+
+	switch *DerivativeLevel {
+	case 2:
+		fortFile = "fort.15"
+	case 3:
+		fortFile = "fort.30"
+		outputFile := path.Join(dir, "fort.15")
+		_, err := copy(*Fort15File, outputFile)
+		if err != nil {
+			fmt.Printf("error copying file, %v\n", err)
+			return err
+		}
+
+	default:
+		panic("undefined case in save to file")
 	}
 
 	tempfn := path.Join(dir, fortFile)
@@ -139,7 +154,7 @@ func (d *Organism) saveToFile(natoms int) error {
 
 	// Now we need to format the file correctly.
 	// Spectro is 20.12f
-	fmt.Fprintf(organismFile, "%5d%5d", natoms, 2*natoms*natoms)
+	fmt.Fprintf(organismFile, "%5d%5d", natoms, GetNumForceConstants(natoms, *DerivativeLevel))
 	for i := range d.DNA {
 		if i%3 == 0 {
 			fmt.Fprintf(organismFile, "\n")
@@ -168,6 +183,13 @@ func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
 		fortFile = "fort.15"
 	case 3:
 		fortFile = "fort.30"
+		outputFile := path.Join(filePath, "fort.15")
+		_, err := copy(*Fort15File, outputFile)
+		if err != nil {
+			fmt.Printf("error copying file, %v\n", err)
+			return err
+		}
+
 	default:
 		panic("undefined case in save to file")
 	}
@@ -244,11 +266,13 @@ func (d *Organism) calcFitness(target []float64) {
 	}
 }
 
+// TODO: Add a constraint on negative frequencies. Should reduce the fitness of
+// the organism, even if the freq get closer.
 func parseOutputSecond(d *Organism, by []byte) {
 	r := bytes.NewReader(by)
 	result := summarize.Spectro(r)
 
-	fmt.Printf("%#v\n", result)
+	// fmt.Printf("%#v\n", result)
 
 	fitness := calcDifference(result.Harm, TargetFrequencies)
 	if fitness == 0 {
@@ -259,7 +283,17 @@ func parseOutputSecond(d *Organism, by []byte) {
 }
 
 func parseOutputThird(d *Organism, by []byte) {
+	r := bytes.NewReader(by)
+	result := summarize.Spectro(r)
 
+	//	fmt.Printf("%#v", result)
+
+	fitness := calcDifference(result.Rots[0], TargetRotational)
+	if fitness == 0 {
+		d.Fitness = 1
+	} else {
+		d.Fitness = fitness
+	}
 }
 
 func calcDifference(gen []float64, target []float64) float64 {
@@ -385,10 +419,11 @@ func tournamentRound(pool []Organism) (d Organism, m Organism) {
 		for i := 0; i < *TournamentPool; i++ {
 			index := rand.Intn(len(pool))
 			round = append(round, pool[index])
-			sort.SliceStable(round, func(i, j int) bool {
-				return round[i].Fitness < round[j].Fitness
-			})
 		}
+		// We only need to sort the round once.
+		sort.SliceStable(round, func(i, j int) bool {
+			return round[i].Fitness < round[j].Fitness
+		})
 
 		return round
 	}
@@ -567,6 +602,31 @@ func main() {
 
 	}
 
+}
+
+func copy(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }
 
 /*
