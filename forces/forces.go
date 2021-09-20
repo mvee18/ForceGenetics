@@ -47,7 +47,7 @@ var TargetFrequencies = []float64{
 */
 
 var TargetFrequencies = []float64{
-	3943, 3832, 1649,
+	3943.98, 3833.99, 1651.33,
 	0, 0, 0,
 	0, 0, 0,
 }
@@ -56,6 +56,12 @@ var TargetRotational = []float64{
 	14.5054957,
 	9.2636424,
 	27.6557350,
+}
+
+var TargetFund = []float64{
+	3753.156,
+	3656.489,
+	1598.834,
 }
 
 // The organism is going to be the array of force constants.
@@ -73,10 +79,11 @@ func RandBool() bool {
 }
 
 func GetNumForceConstants(n int, dn int) int {
-	if dn == 2 {
+	switch dn {
+	case 2:
 		return int(math.Pow(float64(n), 2)) * 3 * 3
 
-	} else if dn == 3 {
+	case 3:
 		c := 0
 		for i := 0; i <= n*3-1; i++ {
 			for j := 0; j <= i; j++ {
@@ -87,9 +94,23 @@ func GetNumForceConstants(n int, dn int) int {
 		}
 		return c
 
-	} else {
-		return 0
+	case 4:
+		c := 0
+		for i := 0; i <= n*3-1; i++ {
+			for j := 0; j <= i; j++ {
+				for k := 0; k <= j; k++ {
+					for l := 0; l <= k; l++ {
+						c++
+					}
+				}
+			}
+		}
+		return c
+
+	default:
+		panic("derivative level invalid, must be 2,3,4.")
 	}
+
 }
 
 func CreateOrganism(numAtoms int) (organism Organism) {
@@ -118,6 +139,34 @@ func CreateOrganism(numAtoms int) (organism Organism) {
 	return organism
 }
 
+// Dir is the temp directory where the file will be stored.
+func copyFile(dir *string, fortFile *string, d *int) error {
+	// New variable. We don't want to accidentally edit the derivative level.
+	derivativeIndex := *d - 2
+
+	var fortFiles = []string{"fort.15", "fort.30", "fort.40"}
+	for i := 0; i <= derivativeIndex; i++ {
+		*fortFile = fortFiles[i]
+		// That is, if this is the last loop.
+		if i == derivativeIndex {
+			break
+		} else {
+			// Otherwise, we need to copy the files below that derivative
+			// level.
+			outputFile := path.Join(*dir, fortFiles[i])
+			_, err := copy(*fortFile, outputFile)
+			if err != nil {
+				fmt.Printf("error copying file, %v\n", err)
+				return err
+			}
+
+		}
+
+	}
+
+	return nil
+}
+
 // Before we can calc the fitness, we have to save the files so that spectro can use them.
 // Let's use temp files.
 func (d *Organism) saveToFile(natoms int) error {
@@ -131,14 +180,23 @@ func (d *Organism) saveToFile(natoms int) error {
 
 	switch *DerivativeLevel {
 	case 2:
-		fortFile = "fort.15"
+		copyErr := copyFile(&dir, &fortFile, DerivativeLevel)
+		if copyErr != nil {
+			fmt.Printf("Error copying file, %v\n", err)
+			return copyErr
+		}
+
 	case 3:
-		fortFile = "fort.30"
-		outputFile := path.Join(dir, "fort.15")
-		_, err := copy(*Fort15File, outputFile)
-		if err != nil {
-			fmt.Printf("error copying file, %v\n", err)
-			return err
+		copyErr := copyFile(&dir, &fortFile, DerivativeLevel)
+		if copyErr != nil {
+			fmt.Printf("Error copying file, %v\n", err)
+			return copyErr
+		}
+	case 4:
+		copyErr := copyFile(&dir, &fortFile, DerivativeLevel)
+		if copyErr != nil {
+			fmt.Printf("Error copying file, %v\n", err)
+			return copyErr
 		}
 
 	default:
@@ -180,16 +238,11 @@ func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
 	fortFile := ""
 	switch *DerivativeLevel {
 	case 2:
-		fortFile = "fort.15"
+		copyFile(&filePath, &fortFile, DerivativeLevel)
 	case 3:
-		fortFile = "fort.30"
-		outputFile := path.Join(filePath, "fort.15")
-		_, err := copy(*Fort15File, outputFile)
-		if err != nil {
-			fmt.Printf("error copying file, %v\n", err)
-			return err
-		}
-
+		copyFile(&filePath, &fortFile, DerivativeLevel)
+	case 4:
+		copyFile(&filePath, &fortFile, DerivativeLevel)
 	default:
 		panic("undefined case in save to file")
 	}
@@ -256,39 +309,25 @@ func (d *Organism) calcFitness(target []float64) {
 
 	ioutil.WriteFile("test.out", outBytes, 0777)
 
-	switch *DerivativeLevel {
-	case 2:
-		parseOutputSecond(d, outBytes)
-	case 3:
-		parseOutputThird(d, outBytes)
-	default:
-		panic("undefined case in save to file")
-	}
+	parseOutput(d, outBytes, *DerivativeLevel)
 }
 
 // TODO: Add a constraint on negative frequencies. Should reduce the fitness of
 // the organism, even if the freq get closer.
-func parseOutputSecond(d *Organism, by []byte) {
+func parseOutput(d *Organism, by []byte, derivative int) {
 	r := bytes.NewReader(by)
 	result := summarize.Spectro(r)
 
-	// fmt.Printf("%#v\n", result)
-
-	fitness := calcDifference(result.Harm, TargetFrequencies)
-	if fitness == 0 {
-		d.Fitness = 1
-	} else {
-		d.Fitness = fitness
+	fitness := 9999.0
+	switch derivative {
+	case 2:
+		fitness = calcDifference(result.Harm, TargetFrequencies)
+	case 3:
+		fitness = calcDifference(result.Rots[0], TargetRotational)
+	case 4:
+		fitness = calcDifference(result.Fund, TargetRotational)
 	}
-}
 
-func parseOutputThird(d *Organism, by []byte) {
-	r := bytes.NewReader(by)
-	result := summarize.Spectro(r)
-
-	//	fmt.Printf("%#v", result)
-
-	fitness := calcDifference(result.Rots[0], TargetRotational)
 	if fitness == 0 {
 		d.Fitness = 1
 	} else {

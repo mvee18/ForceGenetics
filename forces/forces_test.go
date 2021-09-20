@@ -80,6 +80,15 @@ func TestGetNumForceConstants(t *testing.T) {
 
 	})
 
+	t.Run("testing 4th derivative water", func(t *testing.T) {
+		got := GetNumForceConstants(3, 4)
+		want := 495
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+	})
+
 	t.Run("testing number for 6 atoms", func(t *testing.T) {
 		got := GetNumForceConstants(6, 3)
 		want := 1140
