@@ -307,7 +307,7 @@ func (d *Organism) calcFitness(target []float64) {
 		log.Fatalf("Error running cmd, %v\n", err)
 	}
 
-	ioutil.WriteFile("test.out", outBytes, 0777)
+	//	ioutil.WriteFile("test.out", outBytes, 0777)
 
 	parseOutput(d, outBytes, *DerivativeLevel)
 }
@@ -325,7 +325,7 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 	case 3:
 		fitness = calcDifference(result.Rots[0], TargetRotational)
 	case 4:
-		fitness = calcDifference(result.Fund, TargetRotational)
+		fitness = calcDifference(result.Fund, TargetFund)
 	}
 
 	if fitness == 0 {
