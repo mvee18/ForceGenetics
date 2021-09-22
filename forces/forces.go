@@ -633,6 +633,22 @@ func main() {
 				if bestErr != nil {
 					fmt.Printf("Erro saving best organism, %v\n", err)
 				}
+
+				if generation >= *GenLimit {
+					f, err := os.OpenFile(OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+					if err != nil {
+						panic(err)
+					}
+
+					if _, err = f.WriteString("Terminated. Maximum number of generations reached."); err != nil {
+						panic(err)
+					}
+
+					f.Close()
+
+					fmt.Println("Maximum number of generations reached.")
+					os.Exit(0)
+				}
 			}
 
 			delFolders(pool, bestOrganism)
