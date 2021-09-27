@@ -19,8 +19,9 @@ var (
 	TournamentPool  = flag.Int("t", 3, "the number of chromosomes selected to compete to be parents")
 	DerivativeLevel = flag.Int("d", 2, "this is the level of derivative")
 	// TODO: This path doesn't work. It defaults to the directory that the script is being executed in.
-	Fort15File = flag.String("ft2", "./fort.15", "path to the fort.15 file that will be used for 3rd derivatives")
-	GenLimit   = flag.Int("l", 1200, "the maximum number of generations")
+	Fort15File    = flag.String("ft2", "./fort.15", "path to the fort.15 file that will be used for 3rd derivatives")
+	GenLimit      = flag.Int("l", 1200, "the maximum number of generations")
+	CrossOverRate = flag.Float64("c", 0.7, "the chance that two parents chromosomes will crossover, otherwise the only possible change would be mutations.")
 )
 
 func init() {
@@ -30,5 +31,6 @@ func init() {
 	}()
 
 	flag.Parse()
+	fmt.Printf("It is not the strongest of the species that survives, not the most intelligent that survives. \nIt is the one that is the most adaptable to change.\n - Charles Darwin \n")
 	fmt.Printf("The pop size is %d, the pool size is %f\n", *PopSize, *PoolSize)
 }

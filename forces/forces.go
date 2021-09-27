@@ -319,6 +319,7 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 	result := summarize.Spectro(r)
 
 	fitness := 9999.0
+
 	switch derivative {
 	case 2:
 		fitness = calcDifference(result.Harm, TargetFrequencies)
@@ -328,13 +329,18 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 		fitness = calcDifference(result.Fund, TargetFund)
 	}
 
-	if fitness == 0 {
-		d.Fitness = 1
-	} else {
-		d.Fitness = fitness
-	}
+	d.Fitness = fitness
+
+	/*
+		if result.Imag {
+			d.Fitness = fitness * 1.5
+		} else {
+			d.Fitness = fitness * 0.5
+		}
+	*/
 }
 
+// Residual Sum of Squares
 func calcDifference(gen []float64, target []float64) float64 {
 	var d float64
 	for i, v := range gen {
@@ -485,6 +491,7 @@ func crossover(d1 Organism, d2 Organism) Organism {
 		Fitness: 0,
 	}
 
+	//	if rand.Float64() <= *CrossOverRate {
 	// Points to the left come from the first parent.
 	// Points to the right come from the other parent.
 	// Points in the middle are blended.
@@ -496,11 +503,27 @@ func crossover(d1 Organism, d2 Organism) Organism {
 		} else if i > mid {
 			child.DNA[i] = d2.DNA[i]
 		} else if i == mid {
-			child.DNA[i] = crossOverA(d1.DNA[i], d2.DNA[i])
+			if RandBool() {
+				child.DNA[i] = crossOverA(d1.DNA[i], d2.DNA[i])
+			} else {
+				child.DNA[i] = crossOverB(d1.DNA[i], d2.DNA[i])
+			}
 		}
 	}
 
 	return child
+
+	/*
+		} else {
+			if RandBool() {
+				child.DNA = d1.DNA
+			} else {
+				child.DNA = d2.DNA
+			}
+			return child
+		}
+	*/
+
 }
 
 // Where m is the mother chromosome and d is the father chromosome.
