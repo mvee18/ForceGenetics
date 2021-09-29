@@ -332,10 +332,11 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 	d.Fitness = fitness
 
 	/*
+		This additon makes it run slower.
 		if result.Imag {
-			d.Fitness = fitness * 1.5
+			d.Fitness = fitness * 1.1
 		} else {
-			d.Fitness = fitness * 0.5
+			d.Fitness = fitness * 0.9
 		}
 	*/
 }
@@ -491,7 +492,7 @@ func crossover(d1 Organism, d2 Organism) Organism {
 		Fitness: 0,
 	}
 
-	//	if rand.Float64() <= *CrossOverRate {
+	// if rand.Float64() <= *CrossOverRate {
 	// Points to the left come from the first parent.
 	// Points to the right come from the other parent.
 	// Points in the middle are blended.
@@ -517,13 +518,14 @@ func crossover(d1 Organism, d2 Organism) Organism {
 		} else {
 			if RandBool() {
 				child.DNA = d1.DNA
+				return child
+
 			} else {
 				child.DNA = d2.DNA
+				return child
 			}
-			return child
 		}
 	*/
-
 }
 
 // Where m is the mother chromosome and d is the father chromosome.
