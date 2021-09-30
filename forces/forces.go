@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,6 +19,8 @@ import (
 
 	"github.com/ntBre/chemutils/summarize"
 )
+
+var NullSummarize = errors.New("null value of organism.")
 
 // MutationRate is the rate of mutation
 // var MutationRate = 0.0004
@@ -47,6 +50,8 @@ var TargetFrequencies = []float64{
 }
 */
 
+var FortFiles = []string{"fort.15", "fort.30", "fort.40"}
+
 var TargetFrequencies = []float64{
 	3943.98, 3833.99, 1651.33,
 	0, 0, 0,
@@ -65,11 +70,14 @@ var TargetFund = []float64{
 	1598.834,
 }
 
+type DNA []Chromosome
+type Chromosome []float64
+
 // The organism is going to be the array of force constants.
 // We should be able to represent this as a one dimensions array,
 // then reconstruct it to run it in spectro.
 type Organism struct {
-	DNA     []float64
+	DNA     DNA
 	Path    string
 	Fitness float64
 }
@@ -115,19 +123,26 @@ func GetNumForceConstants(n int, dn int) int {
 }
 
 func CreateOrganism(numAtoms int) (organism Organism) {
-	organismSize := GetNumForceConstants(numAtoms, *DerivativeLevel)
-	ba := make([]float64, organismSize)
-	for i := 0; i < organismSize; i++ {
-		ba[i] = (rand.Float64())
-		if RandBool() {
-			ba[i] = -ba[i]
-		}
-	}
-
+	// This iterates over the derivative levels to fill in the DNA for each
+	// organisms on the 3 chromosomes.
+	// Ex. if d = 3 ==> 2, then we get Ch 0, 1 filled.
 	organism = Organism{
-		DNA:     ba,
+		DNA:     []Chromosome{},
 		Path:    "",
 		Fitness: 0,
+	}
+
+	for i := 0; i < *DerivativeLevel-1; i++ {
+		organismSize := GetNumForceConstants(numAtoms, i+2)
+		chromosome := make([]float64, organismSize)
+		for j := 0; j < organismSize; j++ {
+			chromosome[j] = (rand.Float64())
+			if RandBool() {
+				chromosome[j] = -chromosome[j]
+			}
+		}
+
+		organism.DNA = append(organism.DNA, chromosome)
 	}
 
 	err := organism.saveToFile(numAtoms)
@@ -135,7 +150,7 @@ func CreateOrganism(numAtoms int) (organism Organism) {
 		fmt.Printf("Error in saving organism to file, %v\n", err)
 	}
 
-	organism.calcFitness(TargetFrequencies)
+	organism.calcFitness()
 
 	return organism
 }
@@ -171,61 +186,37 @@ func copyFile(dir *string, fortFile *string, d *int) error {
 // Before we can calc the fitness, we have to save the files so that spectro can use them.
 // Let's use temp files.
 func (d *Organism) saveToFile(natoms int) error {
-	fortFile := ""
-
 	dir, err := ioutil.TempDir(".", "forceOrganisms")
 	if err != nil {
 		log.Fatalf("Could not open temp dir, %v\n", err)
 		return err
 	}
 
-	switch *DerivativeLevel {
-	case 2:
-		copyErr := copyFile(&dir, &fortFile, DerivativeLevel)
-		if copyErr != nil {
-			fmt.Printf("Error copying file, %v\n", err)
-			return copyErr
+	for i, chr := range d.DNA {
+		fortFile := FortFiles[i]
+		tempfn := path.Join(dir, fortFile)
+		organismFile, err := os.Create(tempfn)
+		if err != nil {
+			log.Fatalf("Could not open temp file, %v\n", err)
+			return err
 		}
 
-	case 3:
-		copyErr := copyFile(&dir, &fortFile, DerivativeLevel)
-		if copyErr != nil {
-			fmt.Printf("Error copying file, %v\n", err)
-			return copyErr
+		fmt.Fprintf(organismFile, "%5d%5d", natoms, GetNumForceConstants(natoms, i+2))
+		for j := range chr {
+			if j%3 == 0 {
+				fmt.Fprintf(organismFile, "\n")
+			}
+			fmt.Fprintf(organismFile, "%20.10f", d.DNA[i][j])
 		}
-	case 4:
-		copyErr := copyFile(&dir, &fortFile, DerivativeLevel)
-		if copyErr != nil {
-			fmt.Printf("Error copying file, %v\n", err)
-			return copyErr
-		}
+		organismFile.Write([]byte("\n"))
 
-	default:
-		panic("undefined case in save to file")
-	}
+		d.Path = organismFile.Name()
 
-	tempfn := path.Join(dir, fortFile)
-	organismFile, err := os.Create(tempfn)
-	if err != nil {
-		log.Fatalf("Could not open temp file, %v\n", err)
-		return err
+		organismFile.Close()
 	}
 
 	// Now we need to format the file correctly.
 	// Spectro is 20.12f
-	fmt.Fprintf(organismFile, "%5d%5d", natoms, GetNumForceConstants(natoms, *DerivativeLevel))
-	for i := range d.DNA {
-		if i%3 == 0 {
-			fmt.Fprintf(organismFile, "\n")
-		}
-		fmt.Fprintf(organismFile, "%20.10f", d.DNA[i])
-	}
-	organismFile.Write([]byte("\n"))
-
-	d.Path = organismFile.Name()
-
-	organismFile.Close()
-
 	return nil
 }
 
@@ -236,39 +227,28 @@ func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
 		return err
 	}
 
-	fortFile := ""
-	switch *DerivativeLevel {
-	case 2:
-		copyFile(&filePath, &fortFile, DerivativeLevel)
-	case 3:
-		copyFile(&filePath, &fortFile, DerivativeLevel)
-	case 4:
-		copyFile(&filePath, &fortFile, DerivativeLevel)
-	default:
-		panic("undefined case in save to file")
-	}
-
-	tempfn := path.Join(filePath, fortFile)
-	organismFile, err := os.Create(tempfn)
-	if err != nil {
-		log.Fatalf("Could not open temp file, %v\n", err)
-		return err
-	}
-
-	// Now we need to format the file correctly.
-	// Spectro is 20.12f
-	fmt.Fprintf(organismFile, "%5d%5d", natoms, GetNumForceConstants(natoms, *DerivativeLevel))
-	for i := range d.DNA {
-		if i%3 == 0 {
-			fmt.Fprintf(organismFile, "\n")
+	for i, chr := range d.DNA {
+		fortFile := FortFiles[i]
+		tempfn := path.Join(filePath, fortFile)
+		organismFile, err := os.Create(tempfn)
+		if err != nil {
+			log.Fatalf("Could not open temp file, %v\n", err)
+			return err
 		}
-		fmt.Fprintf(organismFile, "%20.10f", d.DNA[i])
+
+		fmt.Fprintf(organismFile, "%5d%5d", natoms, GetNumForceConstants(natoms, i+2))
+		for i := range chr {
+			if i%3 == 0 {
+				fmt.Fprintf(organismFile, "\n")
+			}
+			fmt.Fprintf(organismFile, "%20.10f", d.DNA[i])
+		}
+		organismFile.Write([]byte("\n"))
+
+		d.Path = organismFile.Name()
+
+		organismFile.Close()
 	}
-	organismFile.Write([]byte("\n"))
-
-	d.Path = organismFile.Name()
-
-	organismFile.Close()
 
 	return nil
 }
@@ -276,7 +256,7 @@ func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
 // To calculate the fitness, we must run it through spectro.
 // We can save the results to a temp file and get a difference.
 // The smaller the differences, the greater the fitness (1/difference).
-func (d *Organism) calcFitness(target []float64) {
+func (d *Organism) calcFitness() {
 	// Let's begin with opening the fort file in each organism.
 	f, err := os.Open(d.Path)
 	if err != nil {
@@ -319,15 +299,61 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 	r := bytes.NewReader(by)
 	result := summarize.Spectro(r)
 
+	//	fmt.Printf("%#v", result)
+	//	fmt.Println(d.Path)
+
 	fitness := 9999.0
+
+	var err error
 
 	switch derivative {
 	case 2:
-		fitness = calcDifference(result.Harm, TargetFrequencies)
+		fitness, err = calcDifference(result.Harm, TargetFrequencies)
+		if err != nil {
+			if err == NullSummarize {
+				fmt.Printf("Found null organism at %s", d.Path)
+			}
+		}
 	case 3:
-		fitness = calcDifference(result.Rots[0], TargetRotational)
+		harmFitness, err := calcDifference(result.Harm, TargetFrequencies)
+		if err != nil {
+			if err == NullSummarize {
+				fmt.Printf("Found null organism at %s", d.Path)
+			}
+		}
+
+		rotFitness, err := calcDifference(result.Rots[0], TargetFrequencies)
+		if err != nil {
+			if err == NullSummarize {
+				fmt.Printf("Found null organism at %s", d.Path)
+			}
+		}
+
+		fitness = harmFitness + rotFitness
+
 	case 4:
-		fitness = calcDifference(result.Fund, TargetFund)
+		harmFitness, err := calcDifference(result.Harm, TargetFrequencies)
+		if err != nil {
+			if err == NullSummarize {
+				fmt.Printf("Found null organism at %s", d.Path)
+			}
+		}
+
+		rotFitness, err := calcDifference(result.Rots[0], TargetFrequencies)
+		if err != nil {
+			if err == NullSummarize {
+				fmt.Printf("Found null organism at %s", d.Path)
+			}
+		}
+
+		fundFitness, err := calcDifference(result.Fund, TargetFund)
+		if err != nil {
+			if err == NullSummarize {
+				fmt.Printf("Found null organism at %s", d.Path)
+			}
+		}
+
+		fitness = harmFitness + rotFitness + fundFitness
 	}
 
 	d.Fitness = fitness
@@ -343,13 +369,16 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 }
 
 // Residual Sum of Squares
-func calcDifference(gen []float64, target []float64) float64 {
+func calcDifference(gen []float64, target []float64) (float64, error) {
+	if len(gen) == 0 {
+		return 9999.0, NullSummarize
+	}
 	var d float64
 	for i, v := range gen {
 		d += squareDifference(v, target[i])
 	}
 
-	return math.Sqrt(d)
+	return math.Sqrt(d), nil
 }
 
 func squareDifference(x, y float64) float64 {
@@ -450,6 +479,7 @@ func naturalSelection(pool []Organism, population []Organism, target []float64) 
 
 	//fmt.Printf("Length of pop minus pool is %v\n", len(population)-len(pool))
 
+	// Remember the principle of Independent Assortment. Each chromosome should go through crossover individually.
 	for i := len(pool); i < len(population); i++ {
 		/*
 			r1, r2 := rand.Intn(len(pool)), rand.Intn(len(pool))
@@ -462,9 +492,12 @@ func naturalSelection(pool []Organism, population []Organism, target []float64) 
 		child := crossover(a, b)
 		child.mutate()
 
-		child.saveToFile(*NumAtoms)
+		err := child.saveToFile(*NumAtoms)
+		if err != nil {
+			panic(err)
+		}
 
-		child.calcFitness(target)
+		child.calcFitness()
 
 		children[i] = child
 	}
@@ -501,7 +534,13 @@ func tournamentRound(pool []Organism) (d Organism, m Organism) {
 // We should use the blending method prescribed in Haupt and Haupt.
 // Furthermore, each cross should produce two offspring.
 func crossover(d1 Organism, d2 Organism) Organism {
-	childDNA := make([]float64, len(d1.DNA))
+	childDNA := make(DNA, len(d1.DNA))
+
+	for i, pChr := range d1.DNA {
+		ch := make(Chromosome, len(pChr))
+		childDNA[i] = ch
+	}
+
 	child := Organism{
 		DNA:     childDNA,
 		Path:    "",
@@ -513,35 +552,25 @@ func crossover(d1 Organism, d2 Organism) Organism {
 	// Points to the right come from the other parent.
 	// Points in the middle are blended.
 
-	mid := rand.Intn(len(d1.DNA))
-	for i := 0; i < len(d1.DNA); i++ {
-		if i < mid {
-			child.DNA[i] = d1.DNA[i]
-		} else if i > mid {
-			child.DNA[i] = d2.DNA[i]
-		} else if i == mid {
-			if RandBool() {
-				child.DNA[i] = crossOverA(d1.DNA[i], d2.DNA[i])
-			} else {
-				child.DNA[i] = crossOverB(d1.DNA[i], d2.DNA[i])
+	for i, chr := range d1.DNA {
+		mid := rand.Intn(len(chr))
+		for j := 0; j < len(chr); j++ {
+			if j < mid {
+				child.DNA[i][j] = d1.DNA[i][j]
+			} else if i > mid {
+				child.DNA[i][j] = d2.DNA[i][j]
+			} else if i == mid {
+				if RandBool() {
+					child.DNA[i][j] = crossOverA(d1.DNA[i][j], d2.DNA[i][j])
+				} else {
+					child.DNA[i][j] = crossOverB(d1.DNA[i][j], d2.DNA[i][j])
+				}
 			}
 		}
+
 	}
 
 	return child
-
-	/*
-		} else {
-			if RandBool() {
-				child.DNA = d1.DNA
-				return child
-
-			} else {
-				child.DNA = d2.DNA
-				return child
-			}
-		}
-	*/
 }
 
 // Where m is the mother chromosome and d is the father chromosome.
@@ -563,16 +592,18 @@ func crossOverB(m float64, d float64) float64 {
 
 // Mutation function is unclear. I had it previously generate a new random number, but now it'll add or subtract.
 func (o *Organism) mutate() {
-	for i := 0; i < len(o.DNA); i++ {
-		chance := rand.Float64()
-		if chance <= *MutationRate {
-			o.DNA[i] = rand.Float64()
-			if RandBool() {
-				o.DNA[i] = -o.DNA[i]
-			}
+	for c := range o.DNA {
+		for i := 0; i < len(o.DNA); i++ {
+			chance := rand.Float64()
+			if chance <= *MutationRate {
+				o.DNA[c][i] = rand.Float64()
+				if RandBool() {
+					o.DNA[c][i] = -o.DNA[c][i]
+				}
 
-			if chance <= *ZeroChance {
-				o.DNA[i] = 0.0
+				if chance <= *ZeroChance {
+					o.DNA[c][i] = 0.0
+				}
 			}
 		}
 	}

@@ -7,8 +7,8 @@ import (
 
 func TestCreateOrganism(t *testing.T) {
 	t.Run("run org generation", func(t *testing.T) {
-		organism := CreateOrganism(6)
-		if len(organism.DNA) != GetNumForceConstants(6, 2) {
+		organism := CreateOrganism(3)
+		if len(organism.DNA[0]) != GetNumForceConstants(3, 2) {
 			t.Errorf("organism was not the right size")
 		}
 
@@ -28,7 +28,7 @@ func TestCalcFitness(t *testing.T) {
 			Fitness: 0,
 		}
 
-		organism.calcFitness(TargetFrequencies)
+		organism.calcFitness()
 
 		want := 3.218
 		got := organism.Fitness
@@ -63,9 +63,10 @@ func TestCreatePopulation(t *testing.T) {
 	t.Run("run create pop", func(t *testing.T) {
 		pop := createPopulation()
 		pool := createPool(pop, TargetFrequencies)
+
 		population := naturalSelection(pool, pop, TargetFrequencies)
 
-		fmt.Println(population)
+		fmt.Println(len(population))
 	})
 }
 
