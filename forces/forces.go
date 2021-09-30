@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/ntBre/chemutils/summarize"
@@ -357,10 +358,25 @@ func squareDifference(x, y float64) float64 {
 }
 
 func createPopulation() (population []Organism) {
+	var wg sync.WaitGroup
 	population = make([]Organism, *PopSize)
+
+	sema := make(chan struct{}, 4)
+
 	for i := 0; i < *PopSize; i++ {
-		population[i] = CreateOrganism(*NumAtoms)
+		sema <- struct{}{}
+		wg.Add(1)
+		go func(i int) {
+			defer func() {
+				<-sema
+				wg.Done()
+			}()
+			org := CreateOrganism(*NumAtoms)
+			population[i] = org
+		}(i)
 	}
+	wg.Wait()
+
 	return
 }
 
