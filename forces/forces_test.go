@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
 
@@ -36,6 +37,24 @@ func TestCalcFitness(t *testing.T) {
 		if got >= want {
 			t.Errorf("got %v, wanted %v\n", got, want)
 		}
+	})
+
+	t.Run("running on bad organism LXM", func(t *testing.T) {
+		org := Organism{
+			DNA:     nil,
+			Path:    "testfiles/bad/20/fort.15",
+			Fitness: 0,
+		}
+
+		org.calcFitness()
+
+		want := fmt.Sprintf("%.4f", math.Sqrt(17426396.1))
+		got := fmt.Sprintf("%.4f", org.Fitness)
+
+		if got != want {
+			t.Errorf("got %v, wanted %v\n", got, want)
+		}
+
 	})
 
 	/*

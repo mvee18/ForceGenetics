@@ -221,11 +221,16 @@ func (d *Organism) saveToFile(natoms int) error {
 }
 
 func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
+
+	fmt.Printf("\nThe filePath is %s\n", filePath)
+
 	err := os.MkdirAll(filePath, 0700)
 	if err != nil {
 		log.Fatalf("Could not open temp dir, %v\n", err)
 		return err
 	}
+
+	fmt.Printf("The best organism is %#v\n", d)
 
 	for i, chr := range d.DNA {
 		fortFile := FortFiles[i]
@@ -237,11 +242,11 @@ func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
 		}
 
 		fmt.Fprintf(organismFile, "%5d%5d", natoms, GetNumForceConstants(natoms, i+2))
-		for i := range chr {
-			if i%3 == 0 {
+		for j := range chr {
+			if j%3 == 0 {
 				fmt.Fprintf(organismFile, "\n")
 			}
-			fmt.Fprintf(organismFile, "%20.10f", d.DNA[i])
+			fmt.Fprintf(organismFile, "%20.10f", d.DNA[i][j])
 		}
 		organismFile.Write([]byte("\n"))
 
@@ -299,7 +304,7 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 	r := bytes.NewReader(by)
 	result := summarize.Spectro(r)
 
-	//	fmt.Printf("%#v", result)
+	// fmt.Printf("%#v", result)
 	//	fmt.Println(d.Path)
 
 	fitness := 9999.0
@@ -311,21 +316,21 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 		fitness, err = calcDifference(result.Harm, TargetFrequencies)
 		if err != nil {
 			if err == NullSummarize {
-				fmt.Printf("Found null organism at %s", d.Path)
+				fitness = 9999.99
 			}
 		}
 	case 3:
 		harmFitness, err := calcDifference(result.Harm, TargetFrequencies)
 		if err != nil {
 			if err == NullSummarize {
-				fmt.Printf("Found null organism at %s", d.Path)
+				fitness = 9999.99
 			}
 		}
 
 		rotFitness, err := calcDifference(result.Rots[0], TargetFrequencies)
 		if err != nil {
 			if err == NullSummarize {
-				fmt.Printf("Found null organism at %s", d.Path)
+				fitness = 9999.99
 			}
 		}
 
@@ -335,21 +340,21 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 		harmFitness, err := calcDifference(result.Harm, TargetFrequencies)
 		if err != nil {
 			if err == NullSummarize {
-				fmt.Printf("Found null organism at %s", d.Path)
+				fitness = 9999.99
 			}
 		}
 
 		rotFitness, err := calcDifference(result.Rots[0], TargetFrequencies)
 		if err != nil {
 			if err == NullSummarize {
-				fmt.Printf("Found null organism at %s", d.Path)
+				fitness = 9999.99
 			}
 		}
 
 		fundFitness, err := calcDifference(result.Fund, TargetFund)
 		if err != nil {
 			if err == NullSummarize {
-				fmt.Printf("Found null organism at %s", d.Path)
+				fitness = 9999.99
 			}
 		}
 
@@ -371,10 +376,11 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 // Residual Sum of Squares
 func calcDifference(gen []float64, target []float64) (float64, error) {
 	if len(gen) == 0 {
+		fmt.Printf("error in generation of summarize")
 		return 9999.0, NullSummarize
 	}
 	var d float64
-	for i, v := range gen {
+	for i, v := range padSlice(gen, target) {
 		d += squareDifference(v, target[i])
 	}
 
@@ -384,6 +390,20 @@ func calcDifference(gen []float64, target []float64) (float64, error) {
 func squareDifference(x, y float64) float64 {
 	d := x - y
 	return d * d
+}
+
+// Sometimes the values returned from summarize aren't the correct length since
+// there is a cutoff for those close to 0. Pad each slice to be the same length.
+func padSlice(s []float64, target []float64) []float64 {
+	if len(s) == len(target) {
+		return s
+	} else {
+		for i := len(s); i < len(target); i++ {
+			s = append(s, 0)
+		}
+	}
+
+	return s
 }
 
 func createPopulation() (population []Organism) {
@@ -415,6 +435,9 @@ func createPool(population []Organism, target []float64) (pool []Organism) {
 	sort.SliceStable(population, func(i, j int) bool {
 		return population[i].Fitness < population[j].Fitness
 	})
+
+	fmt.Printf("The top fitness of the pool is: %v %v %v", population[0].Fitness, population[1].Fitness, population[2].Fitness)
+
 	// This is what fraction survives to the next generation.
 	//	fmt.Println("length population, ", len(population))
 	fraction := *PoolSize * float64(*PopSize)
@@ -592,8 +615,8 @@ func crossOverB(m float64, d float64) float64 {
 
 // Mutation function is unclear. I had it previously generate a new random number, but now it'll add or subtract.
 func (o *Organism) mutate() {
-	for c := range o.DNA {
-		for i := 0; i < len(o.DNA); i++ {
+	for c, chr := range o.DNA {
+		for i := 0; i < len(chr); i++ {
 			chance := rand.Float64()
 			if chance <= *MutationRate {
 				o.DNA[c][i] = rand.Float64()
@@ -683,7 +706,9 @@ func main() {
 
 		} else {
 			pool := createPool(population, TargetFrequencies)
+
 			population = naturalSelection(pool, population, TargetFrequencies)
+
 			if generation%10 == 0 {
 				sofar := time.Since(start)
 

@@ -1,0 +1,361 @@
+
+ ************************************************************
+                      PROGRAM SPECTRO 
+    SPECTROSCOPIC CONSTANTS AND VIBRATIONAL PROPERTIES
+
+             WRITTEN BY:  JEFFREY F. GAW 
+                    AND  ANDREW WILLETTS 
+
+
+  RUNNING IN:  CARTESIAN --> NORMAL --> INTERNAL COORD MODE
+ ************************************************************
+
+ NCART    =    1
+ ISOTOP   =    0
+ NBOND    =    2
+ NBEND    =    1
+ 2*NLBEND =    0
+ NOFPB    =    0
+ NTORS    =    0
+ NDERIV   =    2
+ ISYMM    =    0
+ ICURVQ   =    0
+ IDEGNL   =    0
+ IFREQ    =    0
+ IPRNT    =    0
+ NWFRQ    =    0
+ NPROP    =    0
+ ICORIL   =    0
+ IFERM1   =    0
+ IFERM2   =    0
+ IROTRN   =    0
+ ILSQRS   =    0
+ IAVERG   =    1
+ IREP     =    0
+ IPARMF   =    0
+ IPARMD   =    0
+ IGEOM    =    0
+ ITEMP    =  300
+ IDARL    =    0
+ MAXJ     =    3
+ INORM    =    0
+ <>
+ ISOTOPE #            1
+
+          --- INPUT GEOMETRY IN BOHR
+
+
+  GEOMETRY ANALYSIS - 1. INITIAL GEOMETRY
+                      2. MOVE TO PRINCIPAL AXES
+                      3. ROTATE ATOM TO X-AXIS
+                         (SYMMETRIC TOP ONLY)
+
+
+****************************************
+ ORIGINAL COORDINATE REPRESENTATION 
+****************************************
+
+
+   MOLECULAR CARTESIAN GEOMETRY (IN A)
+
+ATOM NO.               X              Y              Z              W
+    1              0.0000000      0.7574256      0.5217872      1.0078250
+    2              0.0000000      0.0000000     -0.0657379     15.9949146
+    3              0.0000000     -0.7574256      0.5217872      1.0078250
+
+   CENTER OF MASS COORDINATES
+
+           CMX            CMY            CMZ
+        0.0000000      0.0000000      0.0000149
+
+   CARTESIAN COORDINATES W.R.T. CENTER OF MASS
+
+ATOM NO.               X              Y              Z              W
+    1              0.0000000      0.7574256      0.5217723      1.0078250
+    2              0.0000000      0.0000000     -0.0657528     15.9949146
+    3              0.0000000     -0.7574256      0.5217723      1.0078250
+
+   INERTIA TENSOR
+
+             1           2           3
+  ------------------------------------------
+   1     1.7742717
+   2     0.0000000   0.6179063
+   3     0.0000000   0.0000000   1.1563655
+
+   EIGENVECTORS OF INERTIA TENSOR
+
+              1           2           3
+   ------------------------------------------
+    1    0.00000000  0.00000000  1.00000000
+    2   -1.00000000  0.00000000  0.00000000
+    3    0.00000000  1.00000000  0.00000000
+
+   PRINCIPAL MOMENTS OF INERTIA
+
+              IN AMU.A+2        IN G.CM+2         IN CM-1           IN MHZ
+                                (*D+39)
+   1          0.61791D+00       0.10261D+00       0.27282D+02       0.81789D+06
+   2          0.11564D+01       0.19202D+00       0.14578D+02       0.43704D+06
+   3          0.17743D+01       0.29463D+00       0.95012D+01       0.28484D+06
+
+**************************************************
+ COORDINATE SYSTEM ABOUT PRINCIPAL AXES 
+**************************************************
+
+
+   MOLECULAR PRINCIPAL GEOMETRY (IN A)
+
+ATOM NO.               A              B              C              W
+    1             -0.7574256      0.5217723      0.0000000      1.0078250
+    2              0.0000000     -0.0657528      0.0000000     15.9949146
+    3              0.7574256      0.5217723      0.0000000      1.0078250
+
+   CENTER OF MASS COORDINATES
+
+           CMX            CMY            CMZ
+        0.0000000      0.0000000      0.0000000
+
+   INERTIA TENSOR
+
+             1           2           3
+  ------------------------------------------
+   1     0.6179063
+   2     0.0000000   1.1563655
+   3     0.0000000   0.0000000   1.7742717
+
+ INTERNUCLEAR DISTANCE MATRIX (IN A)
+
+             1           2           3
+  ------------------------------------------
+   1     0.0000000
+   2     0.9585819   0.0000000
+   3     1.5148512   0.9585819   0.0000000
+
+   BOND ANGLES (CENTRAL ATOM FIRST)
+
+   J   I   K    DEGREES     I   J   K    DEGREES    K   I   J    DEGREES   
+
+   2   1   3    104.399     1   2   3     37.800    3   1   2     37.800
+ <>
+
+          ------------------------------------------------------------
+                             MEMORY ALLOCATION SCHEME 
+          ------------------------------------------------------------
+
+ INTEGER DEFAULT ALLOCATION
+   ALLOCATION: BLOCK START-     1   FINISH-    34   TOTAL-    33
+
+ REAL DEFAULT ALLOCATION
+   ALLOCATION: BLOCK START-    34   FINISH-  4380   TOTAL-  4346
+
+ CUBIC AND QUARTIC ALLOCATION
+   ALLOCATION: BLOCK START-  4380   FINISH-  4380   TOTAL-     0
+
+   ALLOCATION: BLOCK START-  4380   FINISH-  4380   TOTAL-     0
+
+ VIBFX ALLOCATION
+   ALLOCATION: BLOCK START-  4380   FINISH-  4614   TOTAL-   234
+
+ LTENSR ALLOCATION
+   ALLOCATION: BLOCK START-  4380   FINISH-  4549   TOTAL-   169
+
+ SQHAMP ALLOCATION
+   ALLOCATION: BLOCK START-  4380   FINISH-  4407   TOTAL-    27
+
+ UMATRX ALLOCATION
+   ALLOCATION: BLOCK START-  4380   FINISH-  4398   TOTAL-    18
+
+ ZETA ALLOCATION
+   ALLOCATION: BLOCK START-  4380   FINISH-  4473   TOTAL-    93
+
+ TRNSFM ALLOCATION
+   ALLOCATION: BLOCK START-  4614   FINISH-  4716   TOTAL-   102
+
+ FORCE3/FORCE4 ALLOCATION
+   ALLOCATION: BLOCK START-  4716   FINISH-  4716   TOTAL-     0
+
+ XCALC/XCALS ALLOCATION
+   ALLOCATION: BLOCK START-  4716   FINISH-  4716   TOTAL-     0
+
+ ROTA/ROTS ALLOCATION
+   ALLOCATION: BLOCK START-  4716   FINISH-  4716   TOTAL-     0
+
+ INTEN ALLOCATION
+   ALLOCATION: BLOCK START-  4716   FINISH-  4716   TOTAL-     0
+
+ DIPTRN ALLOCATION
+   ALLOCATION: BLOCK START-  4716   FINISH-  4850   TOTAL-   134
+
+ ATUNIT ALLOCATION
+   ALLOCATION: BLOCK START-  4850   FINISH-  7577   TOTAL-  2727
+
+ ITERATE ALLOCATION
+   ALLOCATION: BLOCK START-  7577   FINISH- 15308   TOTAL-  7731
+
+ RAMANQ ALLOCATION
+   ALLOCATION: BLOCK START- 15308   FINISH- 15308   TOTAL-     0
+
+ INTENR ALLOCATION
+   ALLOCATION: BLOCK START- 15308   FINISH- 15308   TOTAL-     0
+
+ HRAMAN ALLOCATION
+   ALLOCATION: BLOCK START- 15308   FINISH- 15308   TOTAL-     0
+
+ LSQRS ALLOCATION
+   ALLOCATION: BLOCK START- 15308   FINISH- 15449   TOTAL-   141
+
+ TMATRX ALLOCATION
+   ALLOCATION: BLOCK START- 15449   FINISH- 15449   TOTAL-     0
+
+ SEXTIC ALLOCATION
+   ALLOCATION: BLOCK START- 15449   FINISH- 15449   TOTAL-     0
+
+ WCALS ALLOCATION
+   ALLOCATION: BLOCK START- 15449   FINISH- 15449   TOTAL-     0
+
+
+   INTEGER MEMORY REQUIRED -      34 Word   ALLOCATED - 3500000 Word
+
+
+   REAL MEMORY REQUIRED    -   15416 Word   ALLOCATED -******** Word
+
+  *** FILE           15  IS IN SPECTRO 1.x FORMAT ***
+
+
+   THE NORMAL COORDINATE ANALYSIS BY FX MATRIX METHOD
+
+
+
+   SECULAR EQUATIONS
+   FXM MATRIX
+
+             1           2           3           4           5           6           7           8           9
+  ------------------------------------------------------------------------------------------------------------------
+   1     0.0000000
+   2     0.0000000   0.0000000
+   3     0.0000000   0.0000000   9.1885752
+   4     0.0000000   0.0000000   0.0000000   0.0000000
+   5     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   6     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   7     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   8     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   9     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+
+
+   *****************************
+   ***VIBRATIONAL FREQUENCIES***
+   *****************************
+
+
+   LXM MATRIX
+
+             1           2           3           4           5           6           7           8           9
+           3949.08        0.00        0.00        0.00        0.00        0.00        0.00        0.00        0.00
+  ------------------------------------------------------------------------------------------------------------------
+   1     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   1.0000000
+   2     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   1.0000000   0.0000000
+   3     1.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   4     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   1.0000000   0.0000000   0.0000000
+   5     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   1.0000000   0.0000000   0.0000000   0.0000000
+   6     0.0000000   0.0000000   0.0000000   0.0000000   1.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   7     0.0000000   0.0000000   0.0000000   1.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   8     0.0000000   0.0000000   1.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   9     0.0000000   1.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+
+
+   LX MATRIX
+
+             1           2           3           4           5           6           7           8           9
+           3949.08        0.00        0.00        0.00        0.00        0.00        0.00        0.00        0.00
+  ------------------------------------------------------------------------------------------------------------------
+   1     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.9961103
+   2     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.9961103   0.0000000
+   3     0.9961103   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   4     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.2500397   0.0000000   0.0000000
+   5     0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.2500397   0.0000000   0.0000000   0.0000000
+   6     0.0000000   0.0000000   0.0000000   0.0000000   0.2500397   0.0000000   0.0000000   0.0000000   0.0000000
+   7     0.0000000   0.0000000   0.0000000   0.9961103   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   8     0.0000000   0.0000000   0.9961103   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+   9     0.0000000   0.9961103   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000
+
+ ******************************** 
+ CURVILINEAR INTERNAL COORDINATES 
+ ******************************** 
+
+ INT COORD NO.    DESCRIPTION           VALUE      ATOMS 
+
+     ( 1)        BOND                        0.95858       1(H )     2(O )
+     ( 2)        BOND                        0.95858       2(O )     3(H )
+     ( 3)        ANGLE                     104.39947       2(O )     1(H )     3(H )
+
+ FIRST DERIVATIVE OF THE L TENSOR :
+ ROWS ARE INT COORDS AND COLUMNS ARE NORMAL COORDS
+
+              1           2           3
+   ------------------------------------------
+    1    0.00000000  0.00000000  0.00000000
+    2    0.00000000  0.00000000  0.61052665
+    3    0.00000000  0.00000000 -0.82108655
+
+******************************************
+ MEAN SQUARE HARMONIC AMPLITUDES AT 30 K
+******************************************
+
+
+ MATRIX OF MEAN SQUARE AMPLITUDES BETWEEN INTERNAL
+ COORDINATES: BONDS IN A, ANGLES IN RADS 
+
+              1           2           3
+   ------------------------------------------
+    1    0.00000000         NaN         NaN
+    2    0.00000000    Infinity   -Infinity
+    3    0.00000000   -Infinity    Infinity
+
+******************************************
+ MEAN SQUARE HARMONIC AMPLITUDES AT 300 K
+******************************************
+
+
+ MATRIX OF MEAN SQUARE AMPLITUDES BETWEEN INTERNAL
+ COORDINATES: BONDS IN A, ANGLES IN RADS 
+
+              1           2           3
+   ------------------------------------------
+    1    0.00000000         NaN         NaN
+    2    0.00000000    Infinity   -Infinity
+    3    0.00000000   -Infinity    Infinity
+
+ ZETA MATRIX FOR COORDINATE DIRECTION :   1
+
+              1           2           3
+   ------------------------------------------
+    1    0.00000000  0.00000000  0.00000000
+    2    0.00000000  0.00000000 -1.00000000
+    3    0.00000000  1.00000000  0.00000000
+
+ ZETA MATRIX FOR COORDINATE DIRECTION :   2
+
+              1           2           3
+   ------------------------------------------
+    1    0.00000000  0.00000000  0.00000000
+    2    0.00000000  0.00000000  0.00000000
+    3    0.00000000  0.00000000  0.00000000
+
+ ZETA MATRIX FOR COORDINATE DIRECTION :   3
+
+              1           2           3
+   ------------------------------------------
+    1    0.00000000  0.00000000  0.00000000
+    2    0.00000000  0.00000000  0.00000000
+    3    0.00000000  0.00000000  0.00000000
+
+ THE WILSON A MATRIX IN AMU 1/2 A 
+ (ROWS ARE VIB DEG OF FREEDOM, AND COLS COORD PRODUCTS),
+
+              1           2           3           4           5           6
+   ------------------------------------------------------------------------------
+    1    0.00000000  0.00000000  0.00000000  1.52076655 -1.04761957  0.00000000
+    2    0.00000000  0.00000000  0.00000000 -1.52076655 -1.04761957  0.00000000
+    3    1.04761957 -1.52076655  0.00000000  0.00000000  0.00000000  1.04761957
+ ZERO PIVOT : MATRIX SINGULAR
