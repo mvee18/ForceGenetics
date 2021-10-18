@@ -20,7 +20,12 @@ import (
 	"github.com/ntBre/chemutils/summarize"
 )
 
-var NullSummarize = errors.New("null value of organism.")
+var ErrNullSummarize = errors.New("null value of organism")
+var ErrCalcFitness = errors.New("error calculating fitness of organism")
+var ErrCalcHarmFitness = errors.New("error calculating harm fitness")
+var ErrCalcRotFitness = errors.New("error calculating rot fit")
+var ErrCalcFundFitness = errors.New("error calculating fund fit")
+var ErrNaNFitness = errors.New("Not a number fitness")
 
 // MutationRate is the rate of mutation
 // var MutationRate = 0.0004
@@ -230,7 +235,7 @@ func (d *Organism) SaveBestOrganism(natoms int, filePath string) error {
 		return err
 	}
 
-	fmt.Printf("The best organism is %#v\n", d)
+	// fmt.Printf("The best organism is %#v\n", d)
 
 	for i, chr := range d.DNA {
 		fortFile := FortFiles[i]
@@ -305,7 +310,7 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 	result := summarize.Spectro(r)
 
 	// fmt.Printf("%#v", result)
-	//	fmt.Println(d.Path)
+	// fmt.Println(d.Path)
 
 	fitness := 9999.0
 
@@ -315,46 +320,70 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 	case 2:
 		fitness, err = calcDifference(result.Harm, TargetFrequencies)
 		if err != nil {
-			if err == NullSummarize {
+			if err == ErrNullSummarize {
 				fitness = 9999.99
+			} else {
+				log.Fatalln(ErrCalcHarmFitness)
 			}
 		}
 	case 3:
 		harmFitness, err := calcDifference(result.Harm, TargetFrequencies)
 		if err != nil {
-			if err == NullSummarize {
+			if err == ErrNullSummarize {
 				fitness = 9999.99
+			} else {
+				log.Fatalln(ErrCalcHarmFitness)
 			}
 		}
 
 		rotFitness, err := calcDifference(result.Rots[0], TargetFrequencies)
 		if err != nil {
-			if err == NullSummarize {
+			if err == ErrNullSummarize {
 				fitness = 9999.99
+			} else {
+				log.Fatalln(ErrCalcRotFitness)
 			}
 		}
 
 		fitness = harmFitness + rotFitness
 
 	case 4:
+		if len(result.Fund) == 0 || len(result.Harm) == 0 || len(result.Rots[0]) == 0 {
+			// fmt.Printf("Singular matrix organism, %v\n", d.Path)
+			d.Fitness = 99999.99
+			return
+		}
+
 		harmFitness, err := calcDifference(result.Harm, TargetFrequencies)
 		if err != nil {
-			if err == NullSummarize {
+			if err == ErrNullSummarize {
 				fitness = 9999.99
+			} else {
+				log.Printf("%v in organism %v\n", err, d.Path)
+				d.Fitness = 99999.99
+				return
 			}
 		}
 
 		rotFitness, err := calcDifference(result.Rots[0], TargetFrequencies)
 		if err != nil {
-			if err == NullSummarize {
+			if err == ErrNullSummarize {
 				fitness = 9999.99
+			} else {
+				log.Printf("%v in organism %v\n", err, d.Path)
+				d.Fitness = 99999.99
+				return
 			}
 		}
 
 		fundFitness, err := calcDifference(result.Fund, TargetFund)
 		if err != nil {
-			if err == NullSummarize {
+			if err == ErrNullSummarize {
 				fitness = 9999.99
+			} else {
+				log.Printf("%v in organism %v\n", err, d.Path)
+				d.Fitness = 99999.99
+				return
 			}
 		}
 
@@ -375,13 +404,18 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 
 // Residual Sum of Squares
 func calcDifference(gen []float64, target []float64) (float64, error) {
-	if len(gen) == 0 {
+	if len(gen) == 0 || len(target) == 0 {
 		fmt.Printf("error in generation of summarize")
-		return 9999.0, NullSummarize
+		return 9999.0, ErrNullSummarize
 	}
 	var d float64
 	for i, v := range padSlice(gen, target) {
 		d += squareDifference(v, target[i])
+	}
+
+	if math.IsNaN(math.Sqrt(d)) {
+		fmt.Printf("NAN detected.\n")
+		return 9999.0, ErrNaNFitness
 	}
 
 	return math.Sqrt(d), nil
@@ -436,7 +470,7 @@ func createPool(population []Organism, target []float64) (pool []Organism) {
 		return population[i].Fitness < population[j].Fitness
 	})
 
-	fmt.Printf("The top fitness of the pool is: %v %v %v", population[0].Fitness, population[1].Fitness, population[2].Fitness)
+	// fmt.Printf("The top fitness of the pool is: %v %v %v", population[0].Fitness, population[1].Fitness, population[2].Fitness)
 
 	// This is what fraction survives to the next generation.
 	//	fmt.Println("length population, ", len(population))

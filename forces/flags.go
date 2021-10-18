@@ -17,7 +17,7 @@ var (
 	PathToSpectroIn = flag.String("i", "./spectro.in", "path/to/spectro.in")
 	ZeroChance      = flag.Float64("z", 0.02, "chance mutation will set value to zero instead of adding/subtracting")
 	TournamentPool  = flag.Int("t", 3, "the number of chromosomes selected to compete to be parents")
-	DerivativeLevel = flag.Int("d", 2, "this is the level of derivative")
+	DerivativeLevel = flag.Int("d", 4, "this is the level of derivative")
 	// TODO: This path doesn't work. It defaults to the directory that the script is being executed in.
 	Fort15File    = flag.String("ft2", "./fort.15", "path to the fort.15 file that will be used for 3rd derivatives")
 	GenLimit      = flag.Int("l", 1200, "the maximum number of generations")
