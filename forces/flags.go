@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 )
 
 var (
@@ -22,6 +24,7 @@ var (
 	Fort15File    = flag.String("ft2", "./fort.15", "path to the fort.15 file that will be used for 3rd derivatives")
 	GenLimit      = flag.Int("l", 1200, "the maximum number of generations")
 	CrossOverRate = flag.Float64("c", 0.95, "the chance that two parents chromosomes will crossover, otherwise the only possible change would be mutations.")
+	FreqInputFile = flag.String("fi", "forces.inp", "the input from where the frequencies will be read")
 )
 
 func init() {
@@ -31,6 +34,10 @@ func init() {
 	}()
 
 	flag.Parse()
-	fmt.Printf("It is not the strongest of the species that survives, not the most intelligent that survives. \nIt is the one that is the most adaptable to change.\n - Charles Darwin \n")
+
+	rand.Seed(time.Now().UnixNano())
+
+	fmt.Printf("%s\n", quotes[rand.Intn(len(quotes))])
+
 	fmt.Printf("The pop size is %d, the pool size is %f\n", *PopSize, *PoolSize)
 }

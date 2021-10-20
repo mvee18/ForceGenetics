@@ -118,3 +118,9 @@ func TestGetNumForceConstants(t *testing.T) {
 		}
 	})
 }
+
+func TestReadInput(t *testing.T) {
+	t.Run("testing testfile input", func(t *testing.T) {
+		ReadInput("testfiles/forces.inp")
+	})
+}

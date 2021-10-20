@@ -57,23 +57,11 @@ var TargetFrequencies = []float64{
 
 var FortFiles = []string{"fort.15", "fort.30", "fort.40"}
 
-var TargetFrequencies = []float64{
-	3943.98, 3833.99, 1651.33,
-	0, 0, 0,
-	0, 0, 0,
-}
+var TargetFrequencies = []float64{}
 
-var TargetRotational = []float64{
-	14.5054957,
-	9.2636424,
-	27.6557350,
-}
+var TargetRotational = []float64{}
 
-var TargetFund = []float64{
-	3753.156,
-	3656.489,
-	1598.834,
-}
+var TargetFund = []float64{}
 
 type DNA []Chromosome
 type Chromosome []float64
@@ -359,7 +347,7 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 			if err == ErrNullSummarize {
 				fitness = 9999.99
 			} else {
-				log.Printf("%v in organism %v\n", err, d.Path)
+				// log.Printf("%v in organism %v\n", err, d.Path)
 				d.Fitness = 99999.99
 				return
 			}
@@ -370,7 +358,7 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 			if err == ErrNullSummarize {
 				fitness = 9999.99
 			} else {
-				log.Printf("%v in organism %v\n", err, d.Path)
+				// log.Printf("%v in organism %v\n", err, d.Path)
 				d.Fitness = 99999.99
 				return
 			}
@@ -381,7 +369,7 @@ func parseOutput(d *Organism, by []byte, derivative int) {
 			if err == ErrNullSummarize {
 				fitness = 9999.99
 			} else {
-				log.Printf("%v in organism %v\n", err, d.Path)
+				// log.Printf("%v in organism %v\n", err, d.Path)
 				d.Fitness = 99999.99
 				return
 			}
@@ -414,7 +402,7 @@ func calcDifference(gen []float64, target []float64) (float64, error) {
 	}
 
 	if math.IsNaN(math.Sqrt(d)) {
-		fmt.Printf("NAN detected.\n")
+		// fmt.Printf("NAN detected.\n")
 		return 9999.0, ErrNaNFitness
 	}
 
@@ -699,6 +687,8 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	TargetFrequencies, TargetRotational, TargetFund = ReadInput(*FreqInputFile)
 }
 
 func main() {
@@ -725,12 +715,16 @@ func main() {
 				panic(err)
 			}
 
+			if _, err = f.WriteString("Yes, the superior fighter is clear. Succcessful termination.\n"); err != nil {
+				panic(err)
+			}
+
 			f.Close()
 
 			bestPath := "best/final"
 			bestErr := bestOrganism.SaveBestOrganism(*NumAtoms, bestPath)
 			if bestErr != nil {
-				fmt.Printf("Erro saving best organism, %v\n", err)
+				fmt.Printf("Error saving best organism, %v\n", err)
 			}
 
 			elapsed := time.Since(start)
@@ -762,7 +756,7 @@ func main() {
 				bestPath := fmt.Sprintf("best/%d", generation)
 				bestErr := bestOrganism.SaveBestOrganism(*NumAtoms, bestPath)
 				if bestErr != nil {
-					fmt.Printf("Erro saving best organism, %v\n", err)
+					fmt.Printf("Error saving best organism, %v\n", err)
 				}
 
 				if generation >= *GenLimit {
