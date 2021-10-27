@@ -593,18 +593,16 @@ func crossover(d1 Organism, d2 Organism) Organism {
 	}
 
 	// if rand.Float64() <= *CrossOverRate {
-	// Points to the left come from the first parent.
-	// Points to the right come from the other parent.
-	// Points in the middle are blended.
+	// This is the simple method of
 
 	for i, chr := range d1.DNA {
 		mid := rand.Intn(len(chr))
 		for j := 0; j < len(chr); j++ {
 			if j < mid {
 				child.DNA[i][j] = d1.DNA[i][j]
-			} else if i > mid {
-				child.DNA[i][j] = d2.DNA[i][j]
-			} else if i == mid {
+				//			} else if i > mid {
+				//		child.DNA[i][j] = d2.DNA[i][j]
+			} else if i >= mid {
 				if RandBool() {
 					child.DNA[i][j] = crossOverA(d1.DNA[i][j], d2.DNA[i][j])
 				} else {
