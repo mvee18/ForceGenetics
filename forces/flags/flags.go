@@ -1,8 +1,9 @@
-package main
+package flags
 
 import (
 	"flag"
 	"fmt"
+	"ga/forces/quotes"
 	"math/rand"
 	"testing"
 	"time"
@@ -25,6 +26,7 @@ var (
 	GenLimit      = flag.Int("l", 1200, "the maximum number of generations")
 	CrossOverRate = flag.Float64("c", 0.95, "the chance that two parents chromosomes will crossover, otherwise the only possible change would be mutations.")
 	FreqInputFile = flag.String("fi", "forces.inp", "the input from where the frequencies will be read")
+	Domain        = flag.Float64("dom", 2.0, "the starting guess for the maximum values for the cartesian force constants")
 )
 
 func init() {
@@ -37,7 +39,7 @@ func init() {
 
 	rand.Seed(time.Now().UnixNano())
 
-	fmt.Printf("%s\n", quotes[rand.Intn(len(quotes))])
+	fmt.Printf("%s\n", quotes.Sayings[rand.Intn(len(quotes.Sayings))])
 
 	fmt.Printf("The pop size is %d, the pool size is %f\n", *PopSize, *PoolSize)
 }

@@ -2,22 +2,10 @@ package quadratic
 
 import (
 	"errors"
-	"fmt"
+	"ga/forces/models"
 	"math"
 	"math/rand"
 )
-
-type DNA []Chromosome
-type Chromosome []float64
-
-// The organism is going to be the array of force constants.
-// We should be able to represent this as a one dimensions array,
-// then reconstruct it to run it in spectro.
-type Organism struct {
-	DNA     DNA
-	Path    string
-	Fitness float64
-}
 
 // Suppose that we have three parents. We can fit a quadratic equation using the following terms from each:
 
@@ -25,15 +13,15 @@ const alpha = 2
 
 var ErrLinearFailed = errors.New("maximum number of iterations reached with reduction of beta")
 
-func QuadraticTerms(p1, p2, p3 *Organism) {
-	childDNA := make(DNA, len(p1.DNA))
+func QuadraticTerms(p1, p2, p3 *models.Organism) models.Organism {
+	childDNA := make(models.DNA, len(p1.DNA))
 
 	for i, pChr := range p1.DNA {
-		ch := make(Chromosome, len(pChr))
+		ch := make(models.Chromosome, len(pChr))
 		childDNA[i] = ch
 	}
 
-	child := Organism{
+	child := models.Organism{
 		DNA:     childDNA,
 		Path:    "",
 		Fitness: 0,
@@ -45,9 +33,9 @@ func QuadraticTerms(p1, p2, p3 *Organism) {
 
 			bj := ((p2.Fitness - p1.Fitness) / (p2.DNA[i][j] - p1.DNA[i][j])) - aj*(p2.DNA[i][j]+p1.DNA[i][j])
 
-			cj := p1.Fitness - aj*math.Pow(p1.DNA[i][j], 2) - bj*p1.DNA[i][j]
+			// cj := p1.Fitness - aj*math.Pow(p1.DNA[i][j], 2) - bj*p1.DNA[i][j]
 
-			fmt.Println(aj, bj, cj)
+			// fmt.Println(aj, bj, cj)
 
 			maximum, valid := calcMaximum(aj, bj)
 			if !valid {
@@ -55,6 +43,18 @@ func QuadraticTerms(p1, p2, p3 *Organism) {
 				iterations := 0.0
 				linear, err := LinearInterpolation(&iterations, beta, p1.DNA[i][j], p3.DNA[i][j])
 				if err == ErrLinearFailed {
+					p := rand.Intn(3)
+					switch p {
+					case 0:
+						child.DNA[i][j] = p1.DNA[i][j]
+
+					case 1:
+						child.DNA[i][j] = p2.DNA[i][j]
+
+					case 2:
+						child.DNA[i][j] = p3.DNA[i][j]
+
+					}
 
 				} else {
 					child.DNA[i][j] = linear
@@ -65,6 +65,8 @@ func QuadraticTerms(p1, p2, p3 *Organism) {
 			}
 		}
 	}
+
+	return child
 }
 
 func calcMaximum(aj, bj float64) (float64, bool) {

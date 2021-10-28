@@ -1,7 +1,9 @@
-package main
+package selection
 
 import (
 	"fmt"
+	"ga/forces/models"
+	"ga/forces/utils"
 	"math"
 	"testing"
 )
@@ -9,7 +11,7 @@ import (
 func TestCreateOrganism(t *testing.T) {
 	t.Run("run org generation", func(t *testing.T) {
 		organism := CreateOrganism(3)
-		if len(organism.DNA[0]) != GetNumForceConstants(3, 2) {
+		if len(organism.DNA[0]) != utils.GetNumForceConstants(3, 2) {
 			t.Errorf("organism was not the right size")
 		}
 
@@ -23,13 +25,13 @@ func TestCreateOrganism(t *testing.T) {
 
 func TestCalcFitness(t *testing.T) {
 	t.Run("checking if LXM is correct for known fort.15 h2o", func(t *testing.T) {
-		organism := Organism{
+		organism := models.Organism{
 			DNA:     nil,
 			Path:    "testfiles/h2o/2nd/fort.15",
 			Fitness: 0,
 		}
 
-		organism.calcFitness()
+		organism.CalcFitness()
 
 		want := 3.218
 		got := organism.Fitness
@@ -40,13 +42,13 @@ func TestCalcFitness(t *testing.T) {
 	})
 
 	t.Run("running on bad organism LXM", func(t *testing.T) {
-		org := Organism{
+		org := models.Organism{
 			DNA:     nil,
 			Path:    "testfiles/bad/20/fort.15",
 			Fitness: 0,
 		}
 
-		org.calcFitness()
+		org.CalcFitness()
 
 		want := fmt.Sprintf("%.4f", math.Sqrt(17426396.1))
 		got := fmt.Sprintf("%.4f", org.Fitness)
@@ -80,10 +82,10 @@ func TestCalcFitness(t *testing.T) {
 
 func TestCreatePopulation(t *testing.T) {
 	t.Run("run create pop", func(t *testing.T) {
-		pop := createPopulation()
-		pool := createPool(pop, TargetFrequencies)
+		pop := CreatePopulation()
+		pool := CreatePool(pop, models.TargetFrequencies)
 
-		population := naturalSelection(pool, pop, TargetFrequencies)
+		population := NaturalSelection(pool, pop, models.TargetFrequencies)
 
 		fmt.Println(len(population))
 	})
@@ -91,7 +93,7 @@ func TestCreatePopulation(t *testing.T) {
 
 func TestGetNumForceConstants(t *testing.T) {
 	t.Run("testing number of force constants for water", func(t *testing.T) {
-		got := GetNumForceConstants(3, 3)
+		got := utils.GetNumForceConstants(3, 3)
 		want := 165
 
 		if got != want {
@@ -101,7 +103,7 @@ func TestGetNumForceConstants(t *testing.T) {
 	})
 
 	t.Run("testing 4th derivative water", func(t *testing.T) {
-		got := GetNumForceConstants(3, 4)
+		got := utils.GetNumForceConstants(3, 4)
 		want := 495
 
 		if got != want {
@@ -110,7 +112,7 @@ func TestGetNumForceConstants(t *testing.T) {
 	})
 
 	t.Run("testing number for 6 atoms", func(t *testing.T) {
-		got := GetNumForceConstants(6, 3)
+		got := utils.GetNumForceConstants(6, 3)
 		want := 1140
 
 		if got != want {
@@ -121,6 +123,6 @@ func TestGetNumForceConstants(t *testing.T) {
 
 func TestReadInput(t *testing.T) {
 	t.Run("testing testfile input", func(t *testing.T) {
-		ReadInput("testfiles/forces.inp")
+		utils.ReadInput("testfiles/forces.inp")
 	})
 }
