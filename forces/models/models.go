@@ -120,13 +120,13 @@ func (d *Organism) CalcFitness() {
 	ParseOutput(d, outBytes, *flags.DerivativeLevel)
 }
 
-// Mutation function is unclear. I had it previously generate a new random number, but now it'll add or subtract.
+// Mutation function is unclear. There are many ideas in the gaussian crossover paper.
 func (o *Organism) Mutate() {
 	for c, chr := range o.DNA {
 		for i := 0; i < len(chr); i++ {
 			chance := rand.Float64()
 			if chance <= *flags.MutationRate {
-				o.DNA[c][i] = rand.Float64()
+				o.DNA[c][i] = (0.0 + rand.Float64()*(*flags.Domain-0.0))
 				if utils.RandBool() {
 					o.DNA[c][i] = -o.DNA[c][i]
 				}
@@ -182,8 +182,8 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 	r := bytes.NewReader(by)
 	result := summarize.Spectro(r)
 
-	// fmt.Printf("%#v", result)
-	// fmt.Println(d.Path)
+	fmt.Printf("%#v", result)
+	fmt.Println(d.Path)
 
 	fitness := 9999.0
 

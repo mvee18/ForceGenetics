@@ -2,6 +2,7 @@ package quadratic
 
 import (
 	"errors"
+	"fmt"
 	"ga/forces/models"
 	"math"
 	"math/rand"
@@ -43,6 +44,7 @@ func QuadraticTerms(p1, p2, p3 *models.Organism) models.Organism {
 				iterations := 0.0
 				linear, err := LinearInterpolation(&iterations, beta, p1.DNA[i][j], p3.DNA[i][j])
 				if err == ErrLinearFailed {
+					fmt.Println(err)
 					p := rand.Intn(3)
 					switch p {
 					case 0:
@@ -72,6 +74,8 @@ func QuadraticTerms(p1, p2, p3 *models.Organism) models.Organism {
 func calcMaximum(aj, bj float64) (float64, bool) {
 	Ej := -bj / (2 * aj)
 
+	fmt.Printf("Ej is %v, and aj is %v\n", Ej, aj)
+
 	if 2*aj < 0 && math.Abs(Ej) < alpha {
 		return Ej, true
 	} else {
@@ -89,6 +93,7 @@ func LinearInterpolation(iterations *float64, beta, m, d float64) (float64, erro
 	pNew := beta*(m-d) + m
 
 	if math.Abs(pNew) < alpha {
+		*iterations = 0.0
 		return pNew, nil
 
 	} else {
