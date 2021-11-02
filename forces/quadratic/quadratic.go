@@ -74,7 +74,7 @@ func QuadraticTerms(p1, p2, p3 *models.Organism) models.Organism {
 func calcMaximum(aj, bj float64) (float64, bool) {
 	Ej := -bj / (2 * aj)
 
-	fmt.Printf("Ej is %v, and aj is %v\n", Ej, aj)
+	// fmt.Printf("Ej is %v, and aj is %v\n", Ej, aj)
 
 	if 2*aj < 0 && math.Abs(Ej) < alpha {
 		return Ej, true

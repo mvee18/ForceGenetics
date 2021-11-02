@@ -12,7 +12,7 @@ import (
 var (
 	MutationRate    = flag.Float64("mut", 0.04, "mutation rate as a decimal")
 	PopSize         = flag.Int("pop", 600, "population size")
-	NumAtoms        = flag.Int("n", 6, "number of atoms")
+	NumAtoms        = flag.Int("n", 4, "number of atoms")
 	PoolSize        = flag.Float64("pool", 0.50, "fraction size of the the previous generation that survives")
 	FitnessLimit    = flag.Float64("f", 1.0, "fitness criteria")
 	OutFile         = flag.String("o", "forces.out", "name of output file")

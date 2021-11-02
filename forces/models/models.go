@@ -182,8 +182,8 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 	r := bytes.NewReader(by)
 	result := summarize.Spectro(r)
 
-	fmt.Printf("%#v", result)
-	fmt.Println(d.Path)
+	// fmt.Printf("%#v", result)
+	// fmt.Println(d.Path)
 
 	fitness := 9999.0
 
@@ -238,7 +238,7 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 			}
 		}
 
-		rotFitness, err := utils.CalcDifference(result.Rots[0], TargetFrequencies)
+		rotFitness, err := utils.CalcDifference(result.Rots[0], TargetRotational)
 		if err != nil {
 			if err == utils.ErrNullSummarize {
 				fitness = 9999.99
