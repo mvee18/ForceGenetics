@@ -40,5 +40,5 @@ if __name__ == "__main__":
 	ax.grid()
 
 	fig.savefig("test.png")
-	plt.show()
+	# plt.show()
 

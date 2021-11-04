@@ -209,7 +209,7 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 			}
 		}
 
-		rotFitness, err := utils.CalcDifference(result.Rots[0], TargetFrequencies)
+		rotFitness, err := utils.CalcDifference(result.Rots[0], TargetRotational)
 		if err != nil {
 			if err == utils.ErrNullSummarize {
 				fitness = 9999.99
