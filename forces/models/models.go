@@ -191,7 +191,7 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 
 	switch derivative {
 	case 2:
-		fitness, err = utils.CalcDifference(result.Harm, TargetFrequencies)
+		fitness, err = utils.CalcDifference(result.LX, TargetFrequencies)
 		if err != nil {
 			if err == utils.ErrNullSummarize {
 				fitness = 9999.99
