@@ -3,14 +3,13 @@ package quadratic
 import (
 	"errors"
 	"fmt"
+	"ga/forces/flags"
 	"ga/forces/models"
 	"math"
 	"math/rand"
 )
 
 // Suppose that we have three parents. We can fit a quadratic equation using the following terms from each:
-
-const alpha = 2
 
 var ErrLinearFailed = errors.New("maximum number of iterations reached with reduction of beta")
 
@@ -76,7 +75,7 @@ func calcMaximum(aj, bj float64) (float64, bool) {
 
 	// fmt.Printf("Ej is %v, and aj is %v\n", Ej, aj)
 
-	if 2*aj < 0 && math.Abs(Ej) < alpha {
+	if 2*aj < 0 && math.Abs(Ej) < *flags.Domain {
 		return Ej, true
 	} else {
 		return Ej, false
@@ -92,7 +91,7 @@ func LinearInterpolation(iterations *float64, beta, m, d float64) (float64, erro
 
 	pNew := beta*(m-d) + m
 
-	if math.Abs(pNew) < alpha {
+	if math.Abs(pNew) < *flags.Domain {
 		*iterations = 0.0
 		return pNew, nil
 
