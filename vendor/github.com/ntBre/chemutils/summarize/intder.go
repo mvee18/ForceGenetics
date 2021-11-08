@@ -45,6 +45,7 @@ type Intder struct {
 var ptable = map[string]string{
 	"1.007825":  "H",
 	"4.002600":  "He",
+	"11.009310": "B",
 	"12.000000": "C",
 	"14.003070": "N",
 	"15.994910": "O",
@@ -65,6 +66,7 @@ const (
 	BEND
 	TORS
 	LIN1
+	OUT
 )
 
 func ReadIntder(filename string) *Intder {
@@ -187,6 +189,8 @@ func ReadIntder(filename string) *Intder {
 				ids = append(ids, TORS)
 			case "LIN1":
 				ids = append(ids, LIN1)
+			case "OUT":
+				ids = append(ids, OUT)
 			default:
 				panic("this type of coordinate not implemented")
 			}
