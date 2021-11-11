@@ -26,7 +26,9 @@ var (
 	GenLimit      = flag.Int("l", 1200, "the maximum number of generations")
 	CrossOverRate = flag.Float64("c", 0.95, "the chance that two parents chromosomes will crossover, otherwise the only possible change would be mutations.")
 	FreqInputFile = flag.String("fi", "forces.inp", "the input from where the frequencies will be read")
-	Domain        = flag.Float64("dom", 2.0, "the starting guess for the maximum values for the cartesian force constants")
+	Domain15      = flag.Float64("dom15", 1.0, "the starting guess for the maximum values for the cartesian force constants")
+	Domain30      = flag.Float64("dom30", 3.0, "the starting guess for the maximum values for the cartesian force constants")
+	Domain40      = flag.Float64("dom40", 10.0, "the starting guess for the maximum values for the cartesian force constants")
 )
 
 func init() {

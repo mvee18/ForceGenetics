@@ -126,7 +126,7 @@ func (o *Organism) Mutate() {
 		for i := 0; i < len(chr); i++ {
 			chance := rand.Float64()
 			if chance <= *flags.MutationRate {
-				o.DNA[c][i] = (0.0 + rand.Float64()*(*flags.Domain-0.0))
+				o.DNA[c][i] = utils.RandValueDomain(c + 2)
 				if utils.RandBool() {
 					o.DNA[c][i] = -o.DNA[c][i]
 				}

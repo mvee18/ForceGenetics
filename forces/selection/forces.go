@@ -58,7 +58,7 @@ func CreateOrganism(numAtoms int) (organism models.Organism) {
 		organismSize := utils.GetNumForceConstants(numAtoms, i+2)
 		chromosome := make([]float64, organismSize)
 		for j := 0; j < organismSize; j++ {
-			chromosome[j] = (0.0 + rand.Float64()*(*flags.Domain-0.0))
+			chromosome[j] = utils.RandValueDomain(i + 2)
 			if utils.RandBool() {
 				chromosome[j] = -chromosome[j]
 			}

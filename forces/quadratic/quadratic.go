@@ -3,8 +3,8 @@ package quadratic
 import (
 	"errors"
 	"fmt"
-	"ga/forces/flags"
 	"ga/forces/models"
+	"ga/forces/utils"
 	"math"
 	"math/rand"
 )
@@ -37,11 +37,11 @@ func QuadraticTerms(p1, p2, p3 *models.Organism) models.Organism {
 
 			// fmt.Println(aj, bj, cj)
 
-			maximum, valid := calcMaximum(aj, bj)
+			maximum, valid := calcMaximum(i+2, aj, bj)
 			if !valid {
 				beta := rand.Float64()
 				iterations := 0.0
-				linear, err := LinearInterpolation(&iterations, beta, p1.DNA[i][j], p3.DNA[i][j])
+				linear, err := LinearInterpolation(&iterations, utils.SelectDomain(i+2), beta, p1.DNA[i][j], p3.DNA[i][j])
 				if err == ErrLinearFailed {
 					fmt.Println(err)
 					p := rand.Intn(3)
@@ -70,12 +70,11 @@ func QuadraticTerms(p1, p2, p3 *models.Organism) models.Organism {
 	return child
 }
 
-func calcMaximum(aj, bj float64) (float64, bool) {
+func calcMaximum(dn int, aj, bj float64) (float64, bool) {
 	Ej := -bj / (2 * aj)
-
 	// fmt.Printf("Ej is %v, and aj is %v\n", Ej, aj)
 
-	if 2*aj < 0 && math.Abs(Ej) < *flags.Domain {
+	if 2*aj < 0 && math.Abs(Ej) < utils.SelectDomain(dn) {
 		return Ej, true
 	} else {
 		return Ej, false
@@ -83,7 +82,7 @@ func calcMaximum(aj, bj float64) (float64, bool) {
 }
 
 // These need to be sorted.
-func LinearInterpolation(iterations *float64, beta, m, d float64) (float64, error) {
+func LinearInterpolation(iterations *float64, alpha, beta, m, d float64) (float64, error) {
 	// CrossoverPoint
 	if *iterations > 3 {
 		return 0.0, ErrLinearFailed
@@ -91,13 +90,13 @@ func LinearInterpolation(iterations *float64, beta, m, d float64) (float64, erro
 
 	pNew := beta*(m-d) + m
 
-	if math.Abs(pNew) < *flags.Domain {
+	if math.Abs(pNew) < alpha {
 		*iterations = 0.0
 		return pNew, nil
 
 	} else {
 		bNew := beta / 2
-		lin, err := LinearInterpolation(iterations, bNew, m, d)
+		lin, err := LinearInterpolation(iterations, alpha, bNew, m, d)
 		*iterations = *iterations + 1.0
 		return lin, err
 	}

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"ga/forces/flags"
 	"log"
 	"math"
 	"math/rand"
@@ -153,4 +154,30 @@ func parseText(s []string) []float64 {
 
 	return freq
 
+}
+
+func RandValueDomain(dn int) float64 {
+	switch dn {
+	case 2:
+		return (0.0 + rand.Float64()*(*flags.Domain15-0.0))
+	case 3:
+		return (0.0 + rand.Float64()*(*flags.Domain30-0.0))
+	case 4:
+		return (0.0 + rand.Float64()*(*flags.Domain40-0.0))
+	default:
+		panic("undefined derivative level: could not select domain.")
+	}
+}
+
+func SelectDomain(dn int) float64 {
+	switch dn {
+	case 2:
+		return *flags.Domain15
+	case 3:
+		return *flags.Domain30
+	case 4:
+		return *flags.Domain40
+	default:
+		panic("undefined derivative level: could not select domain.")
+	}
 }
