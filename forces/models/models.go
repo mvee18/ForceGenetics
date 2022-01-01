@@ -29,6 +29,13 @@ type Organism struct {
 	Fitness float64
 }
 
+// This interface allow us to use the same methods for the informed
+// and the TGA?
+type Organismer interface {
+	SaveToFile(natoms int) error
+	CalcFitness()
+}
+
 var FortFiles = []string{"fort.15", "fort.30", "fort.40"}
 
 var TargetFrequencies = []float64{}
@@ -264,7 +271,6 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 	}
 
 	d.Fitness = fitness
-
 	/*
 		This additon makes it run slower.
 		if result.Imag {
@@ -274,3 +280,5 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 		}
 	*/
 }
+
+func calcFitness()

@@ -1,0 +1,144 @@
+package informed
+
+import (
+	"fmt"
+	"ga/forces/flags"
+	"ga/forces/models"
+	"ga/forces/utils"
+	"math/rand"
+	"sync"
+	"time"
+)
+
+var r1 *rand.Rand
+
+func init() {
+	s1 := rand.NewSource(time.Now().UnixNano() + 2561)
+	r1 = rand.New(s1)
+}
+
+// Gozali et. al really need to publish their code because their description of
+// the implementations make no sense.
+
+type InformedPopulation []InformedOrganism
+
+// We need to add the direction to comply with the simplified swarm particle mode
+// that Gozali suggests. As a result, we need to redefine the methods.
+type InformedOrganism struct {
+	models.Organism
+	Direction bool
+}
+
+// TODO: Split the population in half with quartile/random. IDK make it look
+// clean somehow without tons of paramter passing.
+func CreateInformedPopulation() (population InformedPopulation) {
+	var wg sync.WaitGroup
+	population = make([]InformedOrganism, *flags.PopSize)
+
+	sema := make(chan struct{}, 4)
+
+	for i := 0; i < *flags.PopSize; i++ {
+		sema <- struct{}{}
+		wg.Add(1)
+		go func(i int) {
+			defer func() {
+				<-sema
+				wg.Done()
+			}()
+
+			makeAndSetOrganism := func(org *models.Organism) {
+				direction := utils.RandBool()
+				iOrg := InformedOrganism{
+					Organism:  *org,
+					Direction: direction,
+				}
+				population[i] = iOrg
+
+			}
+
+			if i <= *flags.PopSize/2 {
+				org := CreateInformedOrganism(*flags.NumAtoms, true)
+				makeAndSetOrganism(&org)
+
+			} else {
+				org := CreateInformedOrganism(*flags.NumAtoms, false)
+				makeAndSetOrganism(&org)
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	return
+}
+
+func CreateInformedOrganism(numAtoms int, quartile bool) (organism models.Organism) {
+	// This iterates over the derivative levels to fill in the DNA for each
+	// organisms on the 3 chromosomes.
+	// Ex. if d = 3 ==> 2, then we get Ch 0, 1 filled.
+	organism = models.Organism{
+		DNA:     []models.Chromosome{},
+		Path:    "",
+		Fitness: 0,
+	}
+
+	for i := 0; i < *flags.DerivativeLevel-1; i++ {
+		organismSize := utils.GetNumForceConstants(numAtoms, i+2)
+		chromosome := make([]float64, organismSize)
+		for j := 0; j < organismSize; j++ {
+			if quartile {
+				chromosome[j] = QuartileValueDomain(i+2, QuartileValues(i+2))
+				if utils.RandBool() {
+					chromosome[j] = -chromosome[j]
+				}
+
+			} else {
+				chromosome[j] = utils.RandValueDomain(i + 2)
+				if utils.RandBool() {
+					chromosome[j] = -chromosome[j]
+				}
+			}
+		}
+
+		organism.DNA = append(organism.DNA, chromosome)
+	}
+
+	err := organism.SaveToFile(numAtoms)
+	if err != nil {
+		fmt.Printf("Error in saving organism to file, %v\n", err)
+	}
+
+	organism.CalcFitness()
+
+	return organism
+}
+
+func QuartileValueDomain(dn int, v [4]float64) float64 {
+	// v := [4]float64{q1, q2, q3, ub}
+
+	// Q1 is within first 25%, Q2 within first half, Q2 first 75%.
+	quartile := v[r1.Intn(len(v))]
+
+	switch dn {
+	case 2:
+		return (0.0 + rand.Float64()*(quartile-0.0))
+	case 3:
+		return (0.0 + rand.Float64()*(quartile-0.0))
+	case 4:
+		return (0.0 + rand.Float64()*(quartile-0.0))
+	default:
+		panic("undefined derivative level: could not select domain.")
+	}
+}
+
+// As prescribed in the Gozali paper, we need to follow the IGA steps.
+// We first initialize a quartile system for the lower/upper bound.
+func QuartileValues(dn int) [4]float64 {
+	ub := utils.SelectDomain(dn)
+	lb := 0.0
+
+	q2 := (lb + ub) / 2
+	q1 := q2 * 0.5
+	q3 := q2 * 1.5
+
+	return [4]float64{q1, q2, q3, ub}
+}
