@@ -280,5 +280,3 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 		}
 	*/
 }
-
-func calcFitness()
