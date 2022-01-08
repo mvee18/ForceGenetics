@@ -1,9 +1,20 @@
 package pseudo
 
 import (
+	"bytes"
+	"fmt"
+	"ga/forces/flags"
 	"ga/forces/models"
+	"io/ioutil"
+	"log"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/ntBre/chemutils/summarize"
 )
 
 var d = models.DNA{
@@ -143,5 +154,64 @@ func TestPseudoCrossover(t *testing.T) {
 func TestRunPseudoGA(t *testing.T) {
 	t.Run("testing PGA", func(t *testing.T) {
 		runPGA()
+	})
+}
+
+func TestSummarize(t *testing.T) {
+	d := models.Organism{
+		DNA:     models.DNA{},
+		Path:    "testorg/fort.40",
+		Fitness: 0.0,
+	}
+
+	t.Run("testing on force Organism", func(t *testing.T) {
+		f, err := os.Open(d.Path)
+		if err != nil {
+			log.Fatalf("Error opening file of path, %v\n", err)
+		}
+
+		defer f.Close()
+
+		input, err := os.Open(*flags.PathToSpectroIn)
+		if err != nil {
+			log.Fatalf("Error opening file of spectro in, %v\n", err)
+		}
+
+		b, err := ioutil.ReadFile(*flags.PathToSpectroIn)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		fmt.Println(string(b))
+
+		defer input.Close()
+
+		spectroAbs, err := filepath.Abs(*flags.PathToSpectro)
+		if err != nil {
+			log.Fatalf("Error finding abs path, %v\n", err)
+		}
+
+		cmd := exec.Cmd{
+			Path:  spectroAbs,
+			Stdin: input,
+			Dir:   path.Dir(f.Name()),
+		}
+
+		outBytes, err := cmd.Output()
+		if err != nil {
+			log.Fatalf("Error running cmd, %v\n", err)
+		}
+
+		ioutil.WriteFile("test.out", outBytes, 0777)
+		r := bytes.NewReader(outBytes)
+		result := summarize.Spectro(r)
+
+		fmt.Printf("%#v", result)
+		fmt.Println(d.Path)
+
+		if !reflect.DeepEqual(result.LX, []float64{7807.47, 5086.8, 3854.06, 2615.51, 1616.1, 7634.49, 595.96, 1248.66, 1832.26, 4701.33, 5401.76, 1156.98}) {
+			t.Errorf("wrong LX matrix")
+		}
+
 	})
 }
