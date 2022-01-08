@@ -60,6 +60,7 @@ func RandBool() bool {
 
 func CalcDifference(gen []float64, target []float64) (float64, error) {
 	if len(gen) == 0 || len(target) == 0 {
+		fmt.Printf("gen: %v\n target: %v\n", gen, target)
 		fmt.Printf("error in generation of summarize")
 		return 9999.0, ErrNullSummarize
 	}

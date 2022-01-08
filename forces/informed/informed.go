@@ -26,7 +26,7 @@ type InformedPopulation []InformedOrganism
 // that Gozali suggests. As a result, we need to redefine the methods.
 type InformedOrganism struct {
 	models.Organism
-	Direction bool
+	Direction [3][]bool
 }
 
 // TODO: Split the population in half with quartile/random. IDK make it look
@@ -47,11 +47,13 @@ func CreateInformedPopulation() (population InformedPopulation) {
 			}()
 
 			makeAndSetOrganism := func(org *models.Organism) {
-				direction := utils.RandBool()
 				iOrg := InformedOrganism{
 					Organism:  *org,
-					Direction: direction,
+					Direction: [3][]bool{},
 				}
+
+				iOrg.CreateVelocity()
+
 				population[i] = iOrg
 
 			}
@@ -71,6 +73,25 @@ func CreateInformedPopulation() (population InformedPopulation) {
 	return
 }
 
+func (p *InformedOrganism) CreateVelocity() {
+	var v [3][]bool
+
+	// This should allocate the second dimension to be the same length as
+	// the DNA... a 1:1 mapping for velocity on the same index.
+	// Thus, the corresponding velocity at DNA[i][j] is V[i][j].
+	for i, val := range p.DNA {
+		v[i] = make([]bool, len(val))
+	}
+
+	p.Direction = v
+
+	for j, k := range p.Direction {
+		for l := range k {
+			p.Direction[j][l] = (utils.RandBool())
+		}
+	}
+}
+
 func CreateInformedOrganism(numAtoms int, quartile bool) (organism models.Organism) {
 	// This iterates over the derivative levels to fill in the DNA for each
 	// organisms on the 3 chromosomes.
@@ -81,12 +102,22 @@ func CreateInformedOrganism(numAtoms int, quartile bool) (organism models.Organi
 		Fitness: 0,
 	}
 
+	// The organisms needs its quartile determined ahead of time so all of
+	// its DNA in the same quartile frame.
+
+	qt := r1.Intn(4)
+
+	fmt.Println(qt)
+
 	for i := 0; i < *flags.DerivativeLevel-1; i++ {
 		organismSize := utils.GetNumForceConstants(numAtoms, i+2)
 		chromosome := make([]float64, organismSize)
+
+		qv := QuartileValues(i + 2)
+
 		for j := 0; j < organismSize; j++ {
 			if quartile {
-				chromosome[j] = QuartileValueDomain(i+2, QuartileValues(i+2))
+				chromosome[j] = QuartileValueDomain(qv, qt)
 				if utils.RandBool() {
 					chromosome[j] = -chromosome[j]
 				}
@@ -112,22 +143,13 @@ func CreateInformedOrganism(numAtoms int, quartile bool) (organism models.Organi
 	return organism
 }
 
-func QuartileValueDomain(dn int, v [4]float64) float64 {
+func QuartileValueDomain(v [4]float64, qt int) float64 {
 	// v := [4]float64{q1, q2, q3, ub}
 
 	// Q1 is within first 25%, Q2 within first half, Q2 first 75%.
-	quartile := v[r1.Intn(len(v))]
+	quartile := v[qt]
 
-	switch dn {
-	case 2:
-		return (0.0 + rand.Float64()*(quartile-0.0))
-	case 3:
-		return (0.0 + rand.Float64()*(quartile-0.0))
-	case 4:
-		return (0.0 + rand.Float64()*(quartile-0.0))
-	default:
-		panic("undefined derivative level: could not select domain.")
-	}
+	return (0.0 + rand.Float64()*(quartile-0.0))
 }
 
 // As prescribed in the Gozali paper, we need to follow the IGA steps.
@@ -141,4 +163,47 @@ func QuartileValues(dn int) [4]float64 {
 	q3 := q2 * 1.5
 
 	return [4]float64{q1, q2, q3, ub}
+}
+
+func DirectedMutation(i *InformedOrganism, g func(inf *InformedOrganism)) {
+	deltaNorm := r1.NormFloat64()
+	previousFitness := i.Fitness
+
+	// We must reevaluate the cost function at EVERY mutation.
+	// This will take much longer, but it should give us better convergance over time...
+	for ind, v := range i.DNA {
+		for j := range v {
+			// If the corresponding direction is true (up), then add
+			// the delta.
+
+			if i.Direction[ind][j] {
+				// The DNA at that index should have the denormalized delta added.
+				i.DNA[ind][j] = deltaNorm * utils.SelectDomain(ind+2)
+
+				g(i)
+
+				fmt.Printf("up: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
+
+				// If the new fitness is worse than the old one, swap the direction.
+				if i.Fitness > previousFitness {
+					i.Direction[ind][j] = false
+				}
+
+			} else {
+				// If the mutation is down, then subtract.
+				i.DNA[ind][j] = deltaNorm * utils.SelectDomain(ind+2)
+
+				g(i)
+
+				fmt.Printf("down: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
+
+				// If the new fitness is worse than the old one, swap the direction.
+				if i.Fitness > previousFitness {
+					i.Direction[ind][j] = true
+				}
+			}
+
+		}
+	}
+
 }

@@ -17,6 +17,10 @@ import (
 	"github.com/ntBre/chemutils/summarize"
 )
 
+func init() {
+	TargetFrequencies, TargetRotational, TargetFund = utils.ReadInput(*flags.FreqInputFile)
+}
+
 type DNA []Chromosome
 type Chromosome []float64
 
