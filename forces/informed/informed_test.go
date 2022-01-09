@@ -105,10 +105,48 @@ func TestDirectedMutation(t *testing.T) {
 		if !reflect.DeepEqual(i.Direction, want) {
 			t.Errorf("error in changing direction, got %v\n, wanted %v\n", i.Direction, want)
 		}
+
+		fmt.Println(i.DNA)
 	})
 }
 
 // Always return worse fitness.
 func (i *InformedOrganism) MockCalcFitness() {
 	i.Fitness = 10000
+}
+
+func TestIncrementAndCheck(t *testing.T) {
+	t.Run("test with positive number", func(t *testing.T) {
+		v := 50.0
+		dn := 4
+
+		incrementAndCheck(&v, dn)
+
+		wantedLimit := *flags.Domain40
+		if v > wantedLimit {
+			t.Errorf("wanted less than %v, got %v\n", wantedLimit, v)
+		}
+
+		fmt.Printf("new v: %v\n", v)
+	})
+
+	t.Run("test with negative number", func(t *testing.T) {
+		v := -50.0
+		dn := 4
+
+		incrementAndCheck(&v, dn)
+
+		wantedLimit := *flags.Domain40
+		if v < -wantedLimit {
+			t.Errorf("wanted more than %v, got %v\n", wantedLimit, v)
+		}
+
+		fmt.Printf("new v: %v\n", v)
+	})
+}
+
+func TestRunIGA(t *testing.T) {
+	t.Run("run iga", func(t *testing.T) {
+		RunInformedGA()
+	})
 }

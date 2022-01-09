@@ -4,8 +4,13 @@ import (
 	"fmt"
 	"ga/forces/flags"
 	"ga/forces/models"
+	"ga/forces/selection"
 	"ga/forces/utils"
+	"math"
 	"math/rand"
+	"os"
+	"path"
+	"sort"
 	"sync"
 	"time"
 )
@@ -92,6 +97,27 @@ func (p *InformedOrganism) CreateVelocity() {
 	}
 }
 
+func (p *InformedOrganism) CombinedVelocity(a, b, c [3][]bool) {
+	var v [3][]bool
+
+	for i, val := range a {
+		v[i] = make([]bool, len(val))
+	}
+
+	for i, val := range a {
+		for j := range val {
+			v[i][j] = atLeastTwo(a[i][j], b[i][j], c[i][j])
+		}
+	}
+
+	p.Direction = v
+}
+
+// Returns whether true or false is more common.
+func atLeastTwo(a, b, c bool) bool {
+	return a && (b || c) || (b && c)
+}
+
 func CreateInformedOrganism(numAtoms int, quartile bool) (organism models.Organism) {
 	// This iterates over the derivative levels to fill in the DNA for each
 	// organisms on the 3 chromosomes.
@@ -107,7 +133,7 @@ func CreateInformedOrganism(numAtoms int, quartile bool) (organism models.Organi
 
 	qt := r1.Intn(4)
 
-	fmt.Println(qt)
+	// fmt.Println(qt)
 
 	for i := 0; i < *flags.DerivativeLevel-1; i++ {
 		organismSize := utils.GetNumForceConstants(numAtoms, i+2)
@@ -166,44 +192,182 @@ func QuartileValues(dn int) [4]float64 {
 }
 
 func DirectedMutation(i *InformedOrganism, g func(inf *InformedOrganism)) {
-	deltaNorm := r1.NormFloat64()
 	previousFitness := i.Fitness
 
 	// We must reevaluate the cost function at EVERY mutation.
 	// This will take much longer, but it should give us better convergance over time...
 	for ind, v := range i.DNA {
 		for j := range v {
+			mutationChance := r1.Float64()
+
+			deltaNorm := r1.Float64()
+
 			// If the corresponding direction is true (up), then add
 			// the delta.
+			if mutationChance < *flags.MutationRateInformed {
+				if i.Direction[ind][j] {
+					// The DNA at that index should have the denormalized delta added.
+					i.DNA[ind][j] += deltaNorm * utils.SelectDomain(ind+2)
+					incrementAndCheck(&i.DNA[ind][j], ind+2)
 
-			if i.Direction[ind][j] {
-				// The DNA at that index should have the denormalized delta added.
-				i.DNA[ind][j] = deltaNorm * utils.SelectDomain(ind+2)
+					g(i)
 
-				g(i)
+					// fmt.Printf("up: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
 
-				fmt.Printf("up: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
+					// If the new fitness is worse than the old one, swap the direction.
+					if i.Fitness > previousFitness {
+						i.Direction[ind][j] = false
+					}
 
-				// If the new fitness is worse than the old one, swap the direction.
-				if i.Fitness > previousFitness {
-					i.Direction[ind][j] = false
-				}
+				} else {
+					// If the mutation is down, then subtract.
+					i.DNA[ind][j] -= deltaNorm * utils.SelectDomain(ind+2)
+					incrementAndCheck(&i.DNA[ind][j], ind+2)
 
-			} else {
-				// If the mutation is down, then subtract.
-				i.DNA[ind][j] = deltaNorm * utils.SelectDomain(ind+2)
+					g(i)
 
-				g(i)
+					// fmt.Printf("down: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
 
-				fmt.Printf("down: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
-
-				// If the new fitness is worse than the old one, swap the direction.
-				if i.Fitness > previousFitness {
-					i.Direction[ind][j] = true
+					// If the new fitness is worse than the old one, swap the direction.
+					if i.Fitness > previousFitness {
+						i.Direction[ind][j] = true
+					}
 				}
 			}
-
 		}
 	}
 
+}
+
+// This function ensures that the bounds aren't exceeded by the directed
+// mutation. It randomly adds/subtracts values from the gene until it is within
+// the bounds.
+func incrementAndCheck(v *float64, dn int) {
+	dom := utils.SelectDomain(dn)
+
+	// If the value is out of bounds...
+	for math.Abs(*v) > dom {
+		if *v > 0 {
+			// If positive, subtract until it is below...
+			*v -= r1.Float64() * dom
+
+		} else {
+			// Else, if negative, add until within the bounds.
+			*v += r1.Float64() * dom
+		}
+	}
+
+}
+
+func GetBest(population InformedPopulation) InformedOrganism {
+	sort.SliceStable(population, func(i, j int) bool {
+		return population[i].Fitness < population[j].Fitness
+	})
+
+	return population[0]
+}
+
+func RunInformedGA() {
+	start := time.Now()
+	rand.Seed(time.Now().UTC().UnixNano())
+	population := CreateInformedPopulation()
+
+	found := false
+	generation := 0
+	for !found {
+		generation++
+		fmt.Printf("Generation: %v\n", generation)
+		bestOrganism := GetBest(population)
+		if bestOrganism.Fitness < *flags.FitnessLimit {
+			found = true
+
+			f, err := os.OpenFile(selection.OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+			if err != nil {
+				panic(err)
+			}
+
+			foundString := fmt.Sprintf("The path to the best organism is %v\n", bestOrganism.Path)
+
+			if _, err = f.WriteString(foundString); err != nil {
+				panic(err)
+			}
+
+			if _, err = f.WriteString("Yes, the superior fighter is clear. Succcessful termination.\n"); err != nil {
+				panic(err)
+			}
+
+			f.Close()
+
+			bestPath := "best/final"
+			bestErr := bestOrganism.SaveBestOrganism(*flags.NumAtoms, bestPath)
+			if bestErr != nil {
+				fmt.Printf("Error saving best organism, %v\n", err)
+			}
+
+			elapsed := time.Since(start)
+			fmt.Printf("\nTotal time taken: %s\n", elapsed)
+
+			return
+
+		} else {
+			pool := CreatePool(population, models.TargetFrequencies)
+
+			population = NaturalSelection(pool, population, models.TargetFrequencies)
+
+			if generation%10 == 0 {
+				sofar := time.Since(start)
+
+				summaryStep := fmt.Sprintf("The path to the best organism is %v.\n \nTime taken so far: %s | generation: %d | fitness: %f | pool size: %d\n", bestOrganism.Path, sofar, generation, bestOrganism.Fitness, len(pool))
+
+				f, err := os.OpenFile(selection.OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+				if err != nil {
+					panic(err)
+				}
+
+				if _, err = f.WriteString(summaryStep); err != nil {
+					panic(err)
+				}
+
+				f.Close()
+
+				bestPath := fmt.Sprintf("best/%d", generation)
+				bestErr := bestOrganism.SaveBestOrganism(*flags.NumAtoms, bestPath)
+				if bestErr != nil {
+					fmt.Printf("Error saving best organism, %v\n", err)
+				}
+
+				if generation >= *flags.GenLimit {
+					f, err := os.OpenFile(selection.OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+					if err != nil {
+						panic(err)
+					}
+
+					if _, err = f.WriteString("Terminated. Maximum number of generations reached."); err != nil {
+						panic(err)
+					}
+
+					f.Close()
+
+					fmt.Println("Maximum number of generations reached.")
+					os.Exit(0)
+				}
+			}
+
+			delFolders(pool, bestOrganism)
+			delFolders(population, bestOrganism)
+
+		}
+
+	}
+
+}
+
+func delFolders(o InformedPopulation, topOrganism InformedOrganism) {
+	for _, v := range o {
+		if v.Path == topOrganism.Path {
+			continue
+		} else {
+			os.RemoveAll(path.Dir(v.Path))
+		}
+	}
 }
