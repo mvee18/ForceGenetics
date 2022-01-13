@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func main() {
+func RunTGA() {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := selection.CreatePopulation()
