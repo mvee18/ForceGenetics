@@ -55,3 +55,17 @@ func biasSummation(intermediate *float64, n int) {
 
 	// fmt.Printf("int out: %v\n", *intermediate)
 }
+
+func CalculateHD(ub float64, a, b Organism) {
+	totalHD := 0.0
+
+	for i, chr := range a.DNA {
+		chrHD := 0.0
+
+		for j := range chr {
+			chrHD += ((a.DNA[i][j] + ub) / (2 * ub)) - ((b.DNA[i][j] + ub) / (2 * ub))
+		}
+
+		totalHD += math.Abs(chrHD)
+	}
+}
