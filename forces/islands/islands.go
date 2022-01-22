@@ -5,3 +5,7 @@ type Island interface {
 	Migrate()
 	Crossover()
 }
+
+func Migration() {
+
+}
