@@ -182,3 +182,10 @@ func SelectDomain(dn int) float64 {
 		panic("undefined derivative level: could not select domain.")
 	}
 }
+
+func NewOutputFile(path string) string {
+	rootDir := filepath.Dir(*flags.OutFile)
+	newDir := filepath.Join(rootDir, path)
+
+	return newDir
+}

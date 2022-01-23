@@ -34,7 +34,7 @@ func TestAddMigrant(t *testing.T) {
 		// Note: you cannot just do func(), you need go func().
 		go func() { migrants <- mig }()
 
-		AddImmigrant(&pool, migrants)
+		models.AddImmigrant(&pool, migrants)
 
 		if len(pool) != 2 {
 			t.Errorf("wrong length of pool, wanted %v, got %v\n", 2, len(pool))

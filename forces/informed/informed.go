@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"ga/forces/flags"
 	"ga/forces/models"
-	"ga/forces/selection"
 	"ga/forces/utils"
+	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -16,6 +16,11 @@ import (
 )
 
 var r1 *rand.Rand
+
+var (
+	informedOutFile string = utils.NewOutputFile("informed/informed.out")
+	bestPathFinal   string = utils.NewOutputFile("informed/best/final")
+)
 
 func init() {
 	s1 := rand.NewSource(time.Now().UnixNano() + 2561)
@@ -32,6 +37,17 @@ type InformedPopulation []InformedOrganism
 type InformedOrganism struct {
 	models.Organism
 	Direction [3][]bool
+}
+
+func makeAndSetOrganism(org *models.Organism) InformedOrganism {
+	iOrg := InformedOrganism{
+		Organism:  *org,
+		Direction: [3][]bool{},
+	}
+
+	iOrg.CreateVelocity()
+
+	return iOrg
 }
 
 // TODO: Split the population in half with quartile/random. IDK make it look
@@ -51,25 +67,13 @@ func CreateInformedPopulation() (population InformedPopulation) {
 				wg.Done()
 			}()
 
-			makeAndSetOrganism := func(org *models.Organism) {
-				iOrg := InformedOrganism{
-					Organism:  *org,
-					Direction: [3][]bool{},
-				}
-
-				iOrg.CreateVelocity()
-
-				population[i] = iOrg
-
-			}
-
 			if i <= *flags.PopSize/2 {
 				org := CreateInformedOrganism(*flags.NumAtoms, true)
-				makeAndSetOrganism(&org)
+				population[i] = makeAndSetOrganism(&org)
 
 			} else {
 				org := CreateInformedOrganism(*flags.NumAtoms, false)
-				makeAndSetOrganism(&org)
+				population[i] = makeAndSetOrganism(&org)
 			}
 		}(i)
 	}
@@ -267,7 +271,7 @@ func GetBest(population InformedPopulation) InformedOrganism {
 	return population[0]
 }
 
-func RunInformedGA() {
+func RunInformedGA(immigrant <-chan models.Organism, migrant chan<- models.Organism) {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := CreateInformedPopulation()
@@ -278,78 +282,35 @@ func RunInformedGA() {
 		generation++
 		fmt.Printf("Generation: %v\n", generation)
 		bestOrganism := GetBest(population)
+
+		fmt.Println("migrant added from informed ga")
+		models.AddMigrant(migrant, bestOrganism.Organism)
+
 		if bestOrganism.Fitness < *flags.FitnessLimit {
 			found = true
 
-			f, err := os.OpenFile(selection.OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-			if err != nil {
-				panic(err)
-			}
-
-			foundString := fmt.Sprintf("The path to the best organism is %v\n", bestOrganism.Path)
-
-			if _, err = f.WriteString(foundString); err != nil {
-				panic(err)
-			}
-
-			if _, err = f.WriteString("Yes, the superior fighter is clear. Succcessful termination.\n"); err != nil {
-				panic(err)
-			}
-
-			f.Close()
-
-			bestPath := "best/final"
-			bestErr := bestOrganism.SaveBestOrganism(*flags.NumAtoms, bestPath)
-			if bestErr != nil {
-				fmt.Printf("Error saving best organism, %v\n", err)
-			}
-
-			elapsed := time.Since(start)
-			fmt.Printf("\nTotal time taken: %s\n", elapsed)
+			bestOrganism.LogFinalOrganism(start, informedOutFile, bestPathFinal)
 
 			return
 
 		} else {
 			pool := CreatePool(population, models.TargetFrequencies)
 
+			if generation != 0 {
+				population.AddImmigrant(immigrant)
+			}
+
 			population = NaturalSelection(pool, population, models.TargetFrequencies)
 
 			if generation%10 == 0 {
-				sofar := time.Since(start)
-
-				summaryStep := fmt.Sprintf("The path to the best organism is %v.\n \nTime taken so far: %s | generation: %d | fitness: %f | pool size: %d\n", bestOrganism.Path, sofar, generation, bestOrganism.Fitness, len(pool))
-
-				f, err := os.OpenFile(selection.OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+				bestPath := utils.NewOutputFile(fmt.Sprintf("informed/best/%d", generation))
+				err := bestOrganism.LogIntermediateOrganism(generation, start, informedOutFile, bestPath)
 				if err != nil {
-					panic(err)
-				}
-
-				if _, err = f.WriteString(summaryStep); err != nil {
-					panic(err)
-				}
-
-				f.Close()
-
-				bestPath := fmt.Sprintf("best/%d", generation)
-				bestErr := bestOrganism.SaveBestOrganism(*flags.NumAtoms, bestPath)
-				if bestErr != nil {
-					fmt.Printf("Error saving best organism, %v\n", err)
+					log.Fatalln(err)
 				}
 
 				if generation >= *flags.GenLimit {
-					f, err := os.OpenFile(selection.OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-					if err != nil {
-						panic(err)
-					}
-
-					if _, err = f.WriteString("Terminated. Maximum number of generations reached."); err != nil {
-						panic(err)
-					}
-
-					f.Close()
-
-					fmt.Println("Maximum number of generations reached.")
-					os.Exit(0)
+					models.LogTerminated(informedOutFile)
 				}
 			}
 
@@ -370,4 +331,14 @@ func delFolders(o InformedPopulation, topOrganism InformedOrganism) {
 			os.RemoveAll(path.Dir(v.Path))
 		}
 	}
+}
+
+func (p *InformedPopulation) AddImmigrant(migrant <-chan models.Organism) {
+	// Take the last organism (least fit) off.
+	*p = (*p)[0 : len(*p)-1]
+
+	// Need to convert migrant to informed type.
+	org := <-migrant
+
+	*p = append(*p, makeAndSetOrganism(&org))
 }

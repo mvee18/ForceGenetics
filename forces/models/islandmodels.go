@@ -69,3 +69,14 @@ func CalculateHD(ub float64, a, b Organism) {
 		totalHD += math.Abs(chrHD)
 	}
 }
+
+func AddImmigrant(p *[]Organism, migrant <-chan Organism) {
+	// Take the last organism (least fit) off.
+	*p = (*p)[0 : len(*p)-1]
+
+	*p = append(*p, <-migrant)
+}
+
+func AddMigrant(migrant chan<- Organism, best Organism) {
+	migrant <- best
+}

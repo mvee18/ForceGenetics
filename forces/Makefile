@@ -3,6 +3,7 @@
 .PHONY: swarm/swarm
 .PHONY: models/models 
 .PHONY: traditional/traditional 
+.PHONY: islands/islands 
 
 pseudo/pseudo: pseudo/*.go
 	cd pseudo; go test . -v -run TestRunPseudoGA -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 80 -pc 0.50 -o ../forces.out; rm -rf forceOrganisms*;
@@ -18,3 +19,6 @@ models/models: models/*.go
 
 traditional/traditional: traditional/*.go
 	cd traditional; go test . -v -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 4 -o ../forces.out; rm -rf forceOrganisms*;
+
+islands/islands: islands/*.go
+	cd islands; go test . -v -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 50 -o ../forces.out; rm -rf forceOrganisms*;

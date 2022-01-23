@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/ntBre/chemutils/summarize"
 )
@@ -283,4 +284,76 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 			d.Fitness = fitness * 0.9
 		}
 	*/
+}
+
+func (o *Organism) LogFinalOrganism(start time.Time, fp string, bestPath string) error {
+	f, err := os.OpenFile(fp, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+
+	foundString := fmt.Sprintf("The path to the best organism is %v\n", o.Path)
+
+	if _, err = f.WriteString(foundString); err != nil {
+		panic(err)
+	}
+
+	if _, err = f.WriteString("Yes, the superior fighter is clear. Succcessful termination.\n"); err != nil {
+		panic(err)
+	}
+
+	f.Close()
+
+	bestErr := o.SaveBestOrganism(*flags.NumAtoms, bestPath)
+	if bestErr != nil {
+		fmt.Printf("Error saving best organism, %v\n", err)
+		return err
+	}
+
+	elapsed := time.Since(start)
+	fmt.Printf("\nTotal time taken: %s\n", elapsed)
+
+	return nil
+}
+
+func (o *Organism) LogIntermediateOrganism(generation int, start time.Time, fp string, bestPath string) error {
+	sofar := time.Since(start)
+
+	summaryStep := fmt.Sprintf("The path to the best organism is %v.\n \nTime taken so far: %s | generation: %d | fitness: %f\n", o.Path, sofar, generation, o.Fitness)
+
+	f, err := os.OpenFile(fp, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+
+	if _, err = f.WriteString(summaryStep); err != nil {
+		panic(err)
+	}
+
+	f.Close()
+
+	bestErr := o.SaveBestOrganism(*flags.NumAtoms, bestPath)
+	if bestErr != nil {
+		fmt.Printf("Error saving best organism, %v\n", err)
+		return err
+	}
+
+	return nil
+}
+
+func LogTerminated(output string) {
+	f, err := os.OpenFile(output, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+
+	if _, err = f.WriteString("Terminated. Maximum number of generations reached."); err != nil {
+		panic(err)
+	}
+
+	f.Close()
+
+	fmt.Println("Maximum number of generations reached.")
+	os.Exit(0)
+
 }

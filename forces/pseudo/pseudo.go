@@ -5,6 +5,8 @@ import (
 	"ga/forces/flags"
 	"ga/forces/models"
 	"ga/forces/selection"
+	"ga/forces/utils"
+	"log"
 	"math/rand"
 	"os"
 	"path"
@@ -13,6 +15,11 @@ import (
 )
 
 var r1 *rand.Rand
+
+var (
+	pseudoOutFile string = utils.NewOutputFile("pseudo/pseudo.out")
+	bestPathFinal string = utils.NewOutputFile("pseudo/best/final")
+)
 
 func init() {
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -165,7 +172,14 @@ func delFolders(o []models.Organism, topOrganism models.Organism) {
 	}
 }
 
-func runPGA() {
+func (p *PPopulation) AddImmigrant(migrant <-chan models.Organism) {
+	// Take the last organism (least fit) off.
+	*p = (*p)[0 : len(*p)-1]
+
+	*p = append(*p, <-migrant)
+}
+
+func RunPGA(immigrant <-chan models.Organism, migrant chan<- models.Organism) {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := CreatePseudoPopulation()
@@ -176,76 +190,35 @@ func runPGA() {
 		generation++
 		bestOrganism := selection.GetBest(population)
 
+		fmt.Println("added migrant from pga.")
+		models.AddMigrant(migrant, bestOrganism)
+
 		if bestOrganism.Fitness < *flags.FitnessLimit {
 			found = true
 
-			f, err := os.OpenFile(*flags.OutFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+			err := bestOrganism.LogFinalOrganism(start, pseudoOutFile, bestPathFinal)
 			if err != nil {
-				panic(err)
+				log.Fatalln(err)
 			}
-
-			foundString := fmt.Sprintf("The path to the best organism is %v\n", bestOrganism.Path)
-
-			if _, err = f.WriteString(foundString); err != nil {
-				panic(err)
-			}
-
-			if _, err = f.WriteString("Yes, the superior fighter is clear. Succcessful termination.\n"); err != nil {
-				panic(err)
-			}
-
-			f.Close()
-
-			bestPath := "best/final"
-			bestErr := bestOrganism.SaveBestOrganism(*flags.NumAtoms, bestPath)
-			if bestErr != nil {
-				fmt.Printf("Error saving best organism, %v\n", err)
-			}
-
-			elapsed := time.Since(start)
-			fmt.Printf("\nTotal time taken: %s\n", elapsed)
 
 			return
 
 		} else {
 			population = psuedoCrossover(population)
 
+			if generation != 0 {
+				population.AddImmigrant(immigrant)
+			}
+
 			if generation%10 == 0 {
-				sofar := time.Since(start)
-
-				summaryStep := fmt.Sprintf("The path to the best organism is %v.\n \nTime taken so far: %s | generation: %d | fitness: %f", bestOrganism.Path, sofar, generation, bestOrganism.Fitness)
-
-				f, err := os.OpenFile(*flags.OutFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+				bestPath := utils.NewOutputFile(fmt.Sprintf("pseudo/best/%d", generation))
+				err := bestOrganism.LogIntermediateOrganism(generation, start, pseudoOutFile, bestPath)
 				if err != nil {
-					panic(err)
-				}
-
-				if _, err = f.WriteString(summaryStep); err != nil {
-					panic(err)
-				}
-
-				f.Close()
-
-				bestPath := fmt.Sprintf("best/%d", generation)
-				bestErr := bestOrganism.SaveBestOrganism(*flags.NumAtoms, bestPath)
-				if bestErr != nil {
-					fmt.Printf("Error saving best organism, %v\n", err)
+					log.Fatalln(err)
 				}
 
 				if generation >= *flags.GenLimit {
-					f, err := os.OpenFile(selection.OutputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-					if err != nil {
-						panic(err)
-					}
-
-					if _, err = f.WriteString("Terminated. Maximum number of generations reached."); err != nil {
-						panic(err)
-					}
-
-					f.Close()
-
-					fmt.Println("Maximum number of generations reached.")
-					os.Exit(0)
+					models.LogTerminated(pseudoOutFile)
 				}
 			}
 
