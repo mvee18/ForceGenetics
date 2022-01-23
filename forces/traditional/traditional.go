@@ -18,7 +18,7 @@ var (
 	bestPathFinal string = utils.NewOutputFile("traditional/best/final")
 )
 
-func RunTGA(immigrant <-chan models.Organism, migrant chan<- models.Organism) {
+func RunTGA(migrant chan models.Organism) {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := selection.CreatePopulation()
@@ -30,7 +30,7 @@ func RunTGA(immigrant <-chan models.Organism, migrant chan<- models.Organism) {
 		bestOrganism := selection.GetBest(population)
 
 		// Add migrant to pool.
-		fmt.Println("migrant added from traditional ga")
+		// fmt.Println("migrant added from traditional ga")
 		models.AddMigrant(migrant, bestOrganism)
 
 		if bestOrganism.Fitness < *flags.FitnessLimit {
@@ -46,7 +46,7 @@ func RunTGA(immigrant <-chan models.Organism, migrant chan<- models.Organism) {
 			// If the generation is 0, there won't be any immigrants
 			// to put in the pool from the channel.
 			if generation != 0 {
-				models.AddImmigrant(&pool, immigrant)
+				models.AddImmigrant(&pool, migrant)
 			}
 
 			population = selection.NaturalSelection(pool, population, models.TargetFrequencies)

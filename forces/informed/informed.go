@@ -58,7 +58,7 @@ func CreateInformedPopulation() (population InformedPopulation) {
 
 	sema := make(chan struct{}, 4)
 
-	for i := 0; i < *flags.PopSize; i++ {
+	for i := 0; i < *flags.PopSize/2; i++ {
 		sema <- struct{}{}
 		wg.Add(1)
 		go func(i int) {
@@ -271,7 +271,7 @@ func GetBest(population InformedPopulation) InformedOrganism {
 	return population[0]
 }
 
-func RunInformedGA(immigrant <-chan models.Organism, migrant chan<- models.Organism) {
+func RunInformedGA(migrant chan models.Organism) {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := CreateInformedPopulation()
@@ -280,10 +280,10 @@ func RunInformedGA(immigrant <-chan models.Organism, migrant chan<- models.Organ
 	generation := 0
 	for !found {
 		generation++
-		fmt.Printf("Generation: %v\n", generation)
+		// fmt.Printf("Generation: %v\n", generation)
 		bestOrganism := GetBest(population)
 
-		fmt.Println("migrant added from informed ga")
+		// fmt.Println("migrant added from informed ga")
 		models.AddMigrant(migrant, bestOrganism.Organism)
 
 		if bestOrganism.Fitness < *flags.FitnessLimit {
@@ -297,7 +297,8 @@ func RunInformedGA(immigrant <-chan models.Organism, migrant chan<- models.Organ
 			pool := CreatePool(population, models.TargetFrequencies)
 
 			if generation != 0 {
-				population.AddImmigrant(immigrant)
+				population.AddImmigrant(migrant)
+				// fmt.Println("iga received migrant and is continuing")
 			}
 
 			population = NaturalSelection(pool, population, models.TargetFrequencies)

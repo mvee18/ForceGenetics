@@ -1,7 +1,6 @@
 package islands
 
 import (
-	"fmt"
 	"ga/forces/informed"
 	"ga/forces/models"
 	"ga/forces/pseudo"
@@ -13,17 +12,54 @@ import (
 type Island interface {
 }
 
-func RunIslands(imm chan models.Organism, mig chan models.Organism) {
-	go trad.RunTGA(imm, mig)
+// We will gather than on the mig channel, then disperse them across the imm channels for each one.
+func RunIslands(immPGA, immTGA, immIGA chan models.Organism) {
+	go pseudo.RunPGA(immPGA)
 
-	go informed.RunInformedGA(imm, mig)
+	go trad.RunTGA(immTGA)
 
-	go pseudo.RunPGA(imm, mig)
+	go informed.RunInformedGA(immIGA)
 
-	for i := 0; i < 3; i++ {
+	migrantPool := make([]models.Organism, 0)
+
+	for {
 		select {
-		case <-mig:
-			fmt.Println(i)
+		case p := <-immPGA:
+			migrantPool = append(migrantPool, p)
+			SendBestMigrant(p, immPGA, migrantPool)
+
+		case t := <-immTGA:
+			migrantPool = append(migrantPool, t)
+			SendBestMigrant(t, immTGA, migrantPool)
+
+		case i := <-immIGA:
+			migrantPool = append(migrantPool, i)
+			SendBestMigrant(i, immIGA, migrantPool)
 		}
 	}
+}
+
+func SendBestMigrant(o models.Organism, mig chan<- models.Organism, pool []models.Organism) {
+	// First, we need to check if the pool has more than one member.
+	if len(pool) > 1 {
+		bestIndex, bestHD := 0, 0.0
+		for i, v := range pool {
+			hd := models.CalculateHD(o, v)
+			if hd > bestHD {
+				bestIndex = i
+				bestHD = hd
+			}
+		}
+
+		mig <- pool[bestIndex]
+
+		RemoveIndex(pool, bestIndex)
+
+	} else {
+		mig <- o
+	}
+}
+
+func RemoveIndex(s []models.Organism, index int) []models.Organism {
+	return append(s[:index], s[index+1:]...)
 }

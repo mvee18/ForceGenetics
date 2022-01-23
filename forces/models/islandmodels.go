@@ -56,10 +56,11 @@ func biasSummation(intermediate *float64, n int) {
 	// fmt.Printf("int out: %v\n", *intermediate)
 }
 
-func CalculateHD(ub float64, a, b Organism) {
+func CalculateHD(a, b Organism) float64 {
 	totalHD := 0.0
 
 	for i, chr := range a.DNA {
+		ub := utils.SelectDomain(i + 2)
 		chrHD := 0.0
 
 		for j := range chr {
@@ -68,6 +69,8 @@ func CalculateHD(ub float64, a, b Organism) {
 
 		totalHD += math.Abs(chrHD)
 	}
+
+	return totalHD
 }
 
 func AddImmigrant(p *[]Organism, migrant <-chan Organism) {

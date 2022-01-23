@@ -21,4 +21,4 @@ traditional/traditional: traditional/*.go
 	cd traditional; go test . -v -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 4 -o ../forces.out; rm -rf forceOrganisms*;
 
 islands/islands: islands/*.go
-	cd islands; go test . -v -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 50 -o ../forces.out; rm -rf forceOrganisms*;
+	cd islands; go test . -v -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 4 -o ../forces.out; rm -rf forceOrganisms*;

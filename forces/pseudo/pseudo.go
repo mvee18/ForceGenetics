@@ -179,7 +179,7 @@ func (p *PPopulation) AddImmigrant(migrant <-chan models.Organism) {
 	*p = append(*p, <-migrant)
 }
 
-func RunPGA(immigrant <-chan models.Organism, migrant chan<- models.Organism) {
+func RunPGA(migrant chan models.Organism) {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := CreatePseudoPopulation()
@@ -190,7 +190,7 @@ func RunPGA(immigrant <-chan models.Organism, migrant chan<- models.Organism) {
 		generation++
 		bestOrganism := selection.GetBest(population)
 
-		fmt.Println("added migrant from pga.")
+		// fmt.Println("added migrant from pga.")
 		models.AddMigrant(migrant, bestOrganism)
 
 		if bestOrganism.Fitness < *flags.FitnessLimit {
@@ -207,7 +207,7 @@ func RunPGA(immigrant <-chan models.Organism, migrant chan<- models.Organism) {
 			population = psuedoCrossover(population)
 
 			if generation != 0 {
-				population.AddImmigrant(immigrant)
+				population.AddImmigrant(migrant)
 			}
 
 			if generation%10 == 0 {

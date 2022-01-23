@@ -153,9 +153,9 @@ func TestPseudoCrossover(t *testing.T) {
 
 func TestRunPseudoGA(t *testing.T) {
 	t.Run("testing PGA", func(t *testing.T) {
-		imm, mig := make(<-chan models.Organism), make(chan<- models.Organism)
+		imm := make(chan models.Organism)
 
-		RunPGA(imm, mig)
+		RunPGA(imm)
 	})
 }
 

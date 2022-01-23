@@ -313,6 +313,8 @@ func (o *Organism) LogFinalOrganism(start time.Time, fp string, bestPath string)
 	elapsed := time.Since(start)
 	fmt.Printf("\nTotal time taken: %s\n", elapsed)
 
+	os.Exit(0)
+
 	return nil
 }
 

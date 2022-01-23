@@ -14,7 +14,7 @@ func CreatePool(population InformedPopulation, target []float64) (pool InformedP
 		return population[i].Fitness < population[j].Fitness
 	})
 
-	fraction := *flags.PoolSize * float64(*flags.PopSize)
+	fraction := *flags.PoolSize * float64(*flags.PopSize/2)
 
 	top := population[0:int(fraction)]
 

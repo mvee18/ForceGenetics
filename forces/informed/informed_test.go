@@ -147,8 +147,8 @@ func TestIncrementAndCheck(t *testing.T) {
 
 func TestRunIGA(t *testing.T) {
 	t.Run("run iga", func(t *testing.T) {
-		imm, mig := make(<-chan models.Organism), make(chan<- models.Organism)
+		imm := make(chan models.Organism)
 
-		RunInformedGA(imm, mig)
+		RunInformedGA(imm)
 	})
 }

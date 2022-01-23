@@ -24,7 +24,7 @@ var (
 	DerivativeLevel      = flag.Int("d", 4, "this is the level of derivative")
 	// TODO: This path doesn't work. It defaults to the directory that the script is being executed in.
 	Fort15File          = flag.String("ft2", "./fort.15", "path to the fort.15 file that will be used for 3rd derivatives")
-	GenLimit            = flag.Int("l", 1200, "the maximum number of generations")
+	GenLimit            = flag.Int("l", 100000, "the maximum number of generations")
 	PseudoCrossOverRate = flag.Float64("pc", 0.50, "the chance that two parents chromosomes will crossover in the psuedo GA.")
 	CrossOverRate       = flag.Float64("c", 0.95, "the chance that two parents chromosomes will crossover, otherwise the only possible change would be mutations.")
 	FreqInputFile       = flag.String("fi", "forces.inp", "the input from where the frequencies will be read")
