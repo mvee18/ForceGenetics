@@ -58,7 +58,7 @@ func CreateInformedPopulation() (population InformedPopulation) {
 
 	sema := make(chan struct{}, 4)
 
-	for i := 0; i < *flags.PopSize/2; i++ {
+	for i := 0; i < *flags.PopSize; i++ {
 		sema <- struct{}{}
 		wg.Add(1)
 		go func(i int) {
@@ -67,7 +67,7 @@ func CreateInformedPopulation() (population InformedPopulation) {
 				wg.Done()
 			}()
 
-			if i <= *flags.PopSize/2 {
+			if i <= *flags.PopSize {
 				org := CreateInformedOrganism(*flags.NumAtoms, true)
 				population[i] = makeAndSetOrganism(&org)
 
@@ -283,7 +283,6 @@ func RunInformedGA(migrant chan models.Organism) {
 		// fmt.Printf("Generation: %v\n", generation)
 		bestOrganism := GetBest(population)
 
-		// fmt.Println("migrant added from informed ga")
 		models.AddMigrant(migrant, bestOrganism.Organism)
 
 		if bestOrganism.Fitness < *flags.FitnessLimit {

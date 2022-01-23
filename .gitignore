@@ -5,3 +5,9 @@ forces/genetics
 forces/forceOrganisms*
 forces/pseudo/best
 forces/pseudo/pseudo.out
+
+forces/traditional/trad.out 
+forces/traditional/best
+
+forces/informed/informed.out 
+forces/informed/best
