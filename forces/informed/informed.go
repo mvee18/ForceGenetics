@@ -200,47 +200,62 @@ func DirectedMutation(i *InformedOrganism, g func(inf *InformedOrganism)) {
 
 	// We must reevaluate the cost function at EVERY mutation.
 	// This will take much longer, but it should give us better convergance over time...
+	var wg sync.WaitGroup
+
+	sema := make(chan struct{}, 4)
+
 	for ind, v := range i.DNA {
 		for j := range v {
-			mutationChance := r1.Float64()
+			go func(j int) {
+				defer func() {
+					<-sema
+					wg.Done()
+				}()
 
-			deltaNorm := r1.Float64()
+				mutationChance := r1.Float64()
 
-			// If the corresponding direction is true (up), then add
-			// the delta.
-			if mutationChance < *flags.MutationRateInformed {
-				if i.Direction[ind][j] {
-					// The DNA at that index should have the denormalized delta added.
-					i.DNA[ind][j] += deltaNorm * utils.SelectDomain(ind+2)
-					incrementAndCheck(&i.DNA[ind][j], ind+2)
+				deltaNorm := r1.Float64()
 
-					g(i)
+				// If the corresponding direction is true (up), then add
+				// the delta.
+				if mutationChance < *flags.MutationRateInformed {
+					if i.Direction[ind][j] {
+						// The DNA at that index should have the denormalized delta added.
+						i.DNA[ind][j] += deltaNorm * utils.SelectDomain(ind+2)
+						incrementAndCheck(&i.DNA[ind][j], ind+2)
 
-					// fmt.Printf("up: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
+						g(i)
 
-					// If the new fitness is worse than the old one, swap the direction.
-					if i.Fitness > previousFitness {
-						i.Direction[ind][j] = false
-					}
+						// fmt.Printf("up: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
 
-				} else {
-					// If the mutation is down, then subtract.
-					i.DNA[ind][j] -= deltaNorm * utils.SelectDomain(ind+2)
-					incrementAndCheck(&i.DNA[ind][j], ind+2)
+						// If the new fitness is worse than the old one, swap the direction.
+						if i.Fitness > previousFitness {
+							i.Direction[ind][j] = false
+						}
 
-					g(i)
+					} else {
+						// If the mutation is down, then subtract.
+						i.DNA[ind][j] -= deltaNorm * utils.SelectDomain(ind+2)
+						incrementAndCheck(&i.DNA[ind][j], ind+2)
 
-					// fmt.Printf("down: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
+						g(i)
 
-					// If the new fitness is worse than the old one, swap the direction.
-					if i.Fitness > previousFitness {
-						i.Direction[ind][j] = true
+						// fmt.Printf("down: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
+
+						// If the new fitness is worse than the old one, swap the direction.
+						if i.Fitness > previousFitness {
+							i.Direction[ind][j] = true
+						}
 					}
 				}
-			}
-		}
-	}
+			}(j)
 
+		}
+
+		wg.Wait()
+
+		return
+	}
 }
 
 // This function ensures that the bounds aren't exceeded by the directed
