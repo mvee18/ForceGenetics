@@ -26,6 +26,11 @@ func CreatePool(population InformedPopulation, target []float64) (pool InformedP
 	return
 }
 
+func (i InformedOrganism) CalcFitness() float64 {
+	i.Organism.CalcFitness()
+	return i.Fitness
+}
+
 func NaturalSelection(pool InformedPopulation, population InformedPopulation, target []float64) InformedPopulation {
 	// Children = [pool + empty slice]; len = population.
 	next := make(InformedPopulation, len(population)-len(pool))
@@ -67,9 +72,9 @@ func NaturalSelection(pool InformedPopulation, population InformedPopulation, ta
 		// We combined the parents to yield a new velocity.
 		informed.CombinedVelocity(a.Direction, b.Direction, c.Direction)
 
-		DirectedMutation(&informed, (*InformedOrganism).CalcFitness)
+		mutated := DirectedMutation(informed, (InformedOrganism).CalcFitness)
 
-		children[i] = informed
+		children[i] = mutated
 	}
 
 	//fmt.Println("The length of next is: ", len(children))

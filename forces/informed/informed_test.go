@@ -93,7 +93,7 @@ func TestDirectedMutation(t *testing.T) {
 		}}
 
 	t.Run("test directed mutation with mocked function", func(t *testing.T) {
-		DirectedMutation(&i, (*InformedOrganism).MockCalcFitness)
+		f := DirectedMutation(i, (InformedOrganism).MockCalcFitness)
 		// DirectedMutation(&i, (*InformedOrganism).CalcFitness)
 
 		want := [3][]bool{
@@ -102,17 +102,17 @@ func TestDirectedMutation(t *testing.T) {
 			{true, false, true, false, true},
 		}
 
-		if !reflect.DeepEqual(i.Direction, want) {
+		if !reflect.DeepEqual(f.Direction, want) {
 			t.Errorf("error in changing direction, got %v\n, wanted %v\n", i.Direction, want)
 		}
 
-		fmt.Println(i.DNA)
+		// fmt.Println(i.DNA)
 	})
 }
 
 // Always return worse fitness.
-func (i *InformedOrganism) MockCalcFitness() {
-	i.Fitness = 10000
+func (i InformedOrganism) MockCalcFitness() float64 {
+	return 10000
 }
 
 func TestIncrementAndCheck(t *testing.T) {

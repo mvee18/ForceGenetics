@@ -16,6 +16,7 @@ import (
 )
 
 var r1 *rand.Rand
+var mu sync.Mutex
 
 var (
 	informedOutFile string = utils.NewOutputFile("informed/informed.out")
@@ -195,67 +196,93 @@ func QuartileValues(dn int) [4]float64 {
 	return [4]float64{q1, q2, q3, ub}
 }
 
-func DirectedMutation(i *InformedOrganism, g func(inf *InformedOrganism)) {
+func DirectedMutation(i InformedOrganism, g func(inf InformedOrganism) float64) InformedOrganism {
 	previousFitness := i.Fitness
+	// fmt.Println("previous fitness: ", previousFitness)
+	iFinal := i
 
 	// We must reevaluate the cost function at EVERY mutation.
 	// This will take much longer, but it should give us better convergance over time...
 	var wg sync.WaitGroup
-
 	sema := make(chan struct{}, 4)
 
 	for ind, v := range i.DNA {
 		for j := range v {
-			go func(j int) {
+			iCopy := i
+			pFitness := previousFitness
+			go func(ind, j int) {
 				defer func() {
 					<-sema
 					wg.Done()
 				}()
 
+				mu.Lock()
 				mutationChance := r1.Float64()
+				mu.Unlock()
 
+				mu.Lock()
 				deltaNorm := r1.Float64()
+				mu.Unlock()
 
 				// If the corresponding direction is true (up), then add
 				// the delta.
+				// fmt.Printf("mutation chance is %v\n", *flags.MutationRateInformed)
 				if mutationChance < *flags.MutationRateInformed {
 					if i.Direction[ind][j] {
+						// fmt.Println(deltaNorm, iCopy.DNA[ind][j])
 						// The DNA at that index should have the denormalized delta added.
-						i.DNA[ind][j] += deltaNorm * utils.SelectDomain(ind+2)
-						incrementAndCheck(&i.DNA[ind][j], ind+2)
+						newVal := (iCopy.DNA[ind][j] + deltaNorm*utils.SelectDomain(ind+2))
+						incrementAndCheck(&newVal, ind+2)
 
-						g(i)
+						iFinal.DNA[ind][j] = newVal
+						// fmt.Printf("on indices %d %d\n", ind, j)
+
+						fitness := g(iCopy)
 
 						// fmt.Printf("up: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
 
+						// fmt.Println(fitness)
+
 						// If the new fitness is worse than the old one, swap the direction.
-						if i.Fitness > previousFitness {
-							i.Direction[ind][j] = false
+						if fitness > pFitness {
+							mu.Lock()
+							iFinal.Direction[ind][j] = false
+							mu.Unlock()
 						}
+
+						// if fitness > previousFitness {
+						// fmt.Println("fitness: ", fitness)
 
 					} else {
+						// fmt.Println(deltaNorm, iCopy.DNA[ind][j])
 						// If the mutation is down, then subtract.
-						i.DNA[ind][j] -= deltaNorm * utils.SelectDomain(ind+2)
-						incrementAndCheck(&i.DNA[ind][j], ind+2)
+						newVal := (iCopy.DNA[ind][j] - deltaNorm*utils.SelectDomain(ind+2))
+						incrementAndCheck(&newVal, ind+2)
 
-						g(i)
+						iFinal.DNA[ind][j] = newVal
+						// fmt.Printf("on indices %d %d\n", ind, j)
 
-						// fmt.Printf("down: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
+						g(iCopy)
+						/*
 
-						// If the new fitness is worse than the old one, swap the direction.
-						if i.Fitness > previousFitness {
-							i.Direction[ind][j] = true
-						}
+							// fmt.Printf("down: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
+
+							// If the new fitness is worse than the old one, swap the direction.
+							if iCopy.Fitness > previousFitness {
+								iCopy.Direction[ind][j] = true
+							}
+						*/
 					}
 				}
-			}(j)
+			}(ind, j)
 
 		}
 
-		wg.Wait()
-
-		return
 	}
+
+	wg.Wait()
+
+	return iFinal
 }
 
 // This function ensures that the bounds aren't exceeded by the directed
@@ -268,11 +295,15 @@ func incrementAndCheck(v *float64, dn int) {
 	for math.Abs(*v) > dom {
 		if *v > 0 {
 			// If positive, subtract until it is below...
+			mu.Lock()
 			*v -= r1.Float64() * dom
+			mu.Unlock()
 
 		} else {
 			// Else, if negative, add until within the bounds.
+			mu.Lock()
 			*v += r1.Float64() * dom
+			mu.Unlock()
 		}
 	}
 
