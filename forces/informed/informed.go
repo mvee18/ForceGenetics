@@ -207,10 +207,11 @@ func DirectedMutation(i InformedOrganism, g func(inf InformedOrganism) float64) 
 	sema := make(chan struct{}, 4)
 
 	for ind, v := range i.DNA {
-		for j := range v {
+		for j, gene := range v {
 			iCopy := i
-			pFitness := previousFitness
-			go func(ind, j int) {
+			sema <- struct{}{}
+			wg.Add(1)
+			go func(ind, j int, gene float64) {
 				defer func() {
 					<-sema
 					wg.Done()
@@ -231,7 +232,7 @@ func DirectedMutation(i InformedOrganism, g func(inf InformedOrganism) float64) 
 					if i.Direction[ind][j] {
 						// fmt.Println(deltaNorm, iCopy.DNA[ind][j])
 						// The DNA at that index should have the denormalized delta added.
-						newVal := (iCopy.DNA[ind][j] + deltaNorm*utils.SelectDomain(ind+2))
+						newVal := (gene + deltaNorm*utils.SelectDomain(ind+2))
 						incrementAndCheck(&newVal, ind+2)
 
 						iFinal.DNA[ind][j] = newVal
@@ -244,14 +245,11 @@ func DirectedMutation(i InformedOrganism, g func(inf InformedOrganism) float64) 
 						// fmt.Println(fitness)
 
 						// If the new fitness is worse than the old one, swap the direction.
-						if fitness > pFitness {
-							mu.Lock()
-							iFinal.Direction[ind][j] = false
-							mu.Unlock()
-						}
 
-						// if fitness > previousFitness {
-						// fmt.Println("fitness: ", fitness)
+						if fitness > previousFitness {
+							// fmt.Println("fitness: ", fitness)
+							iFinal.Direction[ind][j] = false
+						}
 
 					} else {
 						// fmt.Println(deltaNorm, iCopy.DNA[ind][j])
@@ -262,19 +260,17 @@ func DirectedMutation(i InformedOrganism, g func(inf InformedOrganism) float64) 
 						iFinal.DNA[ind][j] = newVal
 						// fmt.Printf("on indices %d %d\n", ind, j)
 
-						g(iCopy)
-						/*
+						fitness := g(iCopy)
 
-							// fmt.Printf("down: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
+						// fmt.Printf("down: the old fitness is %v, the new fitness is %v\n", previousFitness, i.Fitness)
 
-							// If the new fitness is worse than the old one, swap the direction.
-							if iCopy.Fitness > previousFitness {
-								iCopy.Direction[ind][j] = true
-							}
-						*/
+						// If the new fitness is worse than the old one, swap the direction.
+						if fitness > previousFitness {
+							iFinal.Direction[ind][j] = true
+						}
 					}
 				}
-			}(ind, j)
+			}(ind, j, gene)
 
 		}
 
