@@ -73,13 +73,20 @@ func CalculateHD(a, b Organism) float64 {
 	return totalHD
 }
 
-func AddImmigrant(p *[]Organism, migrant <-chan Organism) {
+func AddImmigrant(p *[]Organism, migrant <-chan OrganismAndBias) {
 	// Take the last organism (least fit) off.
 	*p = (*p)[0 : len(*p)-1]
 
-	*p = append(*p, <-migrant)
+	org := <-migrant
+
+	*p = append(*p, org.Org)
 }
 
-func AddMigrant(migrant chan<- Organism, best Organism) {
+func AddMigrant(migrant chan<- OrganismAndBias, best OrganismAndBias) {
 	migrant <- best
+}
+
+type OrganismAndBias struct {
+	Bias float64
+	Org  Organism
 }

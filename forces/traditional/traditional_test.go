@@ -22,13 +22,18 @@ func TestAddMigrant(t *testing.T) {
 
 		pool := []models.Organism{o1, o2}
 
-		mig := models.Organism{
+		migOrg := models.Organism{
 			DNA:     models.DNA{},
 			Fitness: 5.0,
 			Path:    "",
 		}
 
-		migrants := make(chan models.Organism)
+		mig := models.OrganismAndBias{
+			Org:  migOrg,
+			Bias: 0.0,
+		}
+
+		migrants := make(chan models.OrganismAndBias)
 
 		// Add migrant to channel.
 		// Note: you cannot just do func(), you need go func().

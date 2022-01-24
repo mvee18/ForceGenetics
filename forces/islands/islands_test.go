@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	immPGA = make(chan models.Organism)
-	immTGA = make(chan models.Organism)
-	immIGA = make(chan models.Organism)
+	immPGA = make(chan models.OrganismAndBias)
+	immTGA = make(chan models.OrganismAndBias)
+	immIGA = make(chan models.OrganismAndBias)
 )
 
 func TestRunIslands(t *testing.T) {

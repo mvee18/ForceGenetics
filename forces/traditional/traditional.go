@@ -18,7 +18,7 @@ var (
 	bestPathFinal string = utils.NewOutputFile("traditional/best/final")
 )
 
-func RunTGA(migrant chan models.Organism) {
+func RunTGA(migrant chan models.OrganismAndBias) {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := selection.CreatePopulation()
@@ -31,7 +31,12 @@ func RunTGA(migrant chan models.Organism) {
 
 		// Add migrant to pool.
 		// fmt.Println("migrant added from traditional ga")
-		models.AddMigrant(migrant, bestOrganism)
+		best := models.OrganismAndBias{
+			Org:  bestOrganism,
+			Bias: models.CalculateBias(population),
+		}
+
+		models.AddMigrant(migrant, best)
 
 		if bestOrganism.Fitness < *flags.FitnessLimit {
 			found = true

@@ -172,14 +172,16 @@ func delFolders(o []models.Organism, topOrganism models.Organism) {
 	}
 }
 
-func (p *PPopulation) AddImmigrant(migrant <-chan models.Organism) {
+func (p *PPopulation) AddImmigrant(migrant <-chan models.OrganismAndBias) {
 	// Take the last organism (least fit) off.
 	*p = (*p)[0 : len(*p)-1]
 
-	*p = append(*p, <-migrant)
+	org := <-migrant
+
+	*p = append(*p, org.Org)
 }
 
-func RunPGA(migrant chan models.Organism) {
+func RunPGA(migrant chan models.OrganismAndBias) {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := CreatePseudoPopulation()
@@ -190,8 +192,13 @@ func RunPGA(migrant chan models.Organism) {
 		generation++
 		bestOrganism := selection.GetBest(population)
 
+		best := models.OrganismAndBias{
+			Org:  bestOrganism,
+			Bias: models.CalculateBias(population),
+		}
+
 		// fmt.Println("added migrant from pga.")
-		models.AddMigrant(migrant, bestOrganism)
+		models.AddMigrant(migrant, best)
 
 		if bestOrganism.Fitness < *flags.FitnessLimit {
 			found = true
