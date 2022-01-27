@@ -3,6 +3,7 @@ package selection
 import (
 	"fmt"
 	"ga/forces/flags"
+	"ga/forces/guess"
 	"ga/forces/models"
 	"ga/forces/quadratic"
 	"ga/forces/utils"
@@ -54,17 +55,21 @@ func CreateOrganism(numAtoms int) (organism models.Organism) {
 		Fitness: 0,
 	}
 
-	for i := 0; i < *flags.DerivativeLevel-1; i++ {
-		organismSize := utils.GetNumForceConstants(numAtoms, i+2)
-		chromosome := make([]float64, organismSize)
-		for j := 0; j < organismSize; j++ {
-			chromosome[j] = utils.RandValueDomain(i + 2)
-			if utils.RandBool() {
-				chromosome[j] = -chromosome[j]
+	if *flags.InitialGuess == "" {
+		for i := 0; i < *flags.DerivativeLevel-1; i++ {
+			organismSize := utils.GetNumForceConstants(numAtoms, i+2)
+			chromosome := make([]float64, organismSize)
+			for j := 0; j < organismSize; j++ {
+				chromosome[j] = utils.RandValueDomain(i + 2)
+				if utils.RandBool() {
+					chromosome[j] = -chromosome[j]
+				}
 			}
-		}
 
-		organism.DNA = append(organism.DNA, chromosome)
+			organism.DNA = append(organism.DNA, chromosome)
+		}
+	} else {
+		organism.DNA = guess.MockB3LYP(*flags.InitialGuess)
 	}
 
 	err := organism.SaveToFile(numAtoms)

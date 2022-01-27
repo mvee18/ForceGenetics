@@ -5,6 +5,7 @@ import (
 	"ga/forces/quadratic"
 	"math/rand"
 	"os"
+	"path"
 	"sort"
 )
 
@@ -73,7 +74,7 @@ func NaturalSelection(pool InformedPopulation, population InformedPopulation, ta
 		// We combined the parents to yield a new velocity.
 		informed.CombinedVelocity(a.Direction, b.Direction, c.Direction)
 
-		defer os.RemoveAll(informed.Path)
+		defer os.RemoveAll(path.Dir(informed.Path))
 
 		mutated := DirectedMutation(informed, (InformedOrganism).CalcFitness)
 

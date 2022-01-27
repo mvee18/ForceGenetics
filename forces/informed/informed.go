@@ -3,6 +3,7 @@ package informed
 import (
 	"fmt"
 	"ga/forces/flags"
+	"ga/forces/guess"
 	"ga/forces/models"
 	"ga/forces/utils"
 	"log"
@@ -136,32 +137,40 @@ func CreateInformedOrganism(numAtoms int, quartile bool) (organism models.Organi
 	// The organisms needs its quartile determined ahead of time so all of
 	// its DNA in the same quartile frame.
 
+	mu.Lock()
 	qt := r1.Intn(4)
+	mu.Unlock()
 
 	// fmt.Println(qt)
 
-	for i := 0; i < *flags.DerivativeLevel-1; i++ {
-		organismSize := utils.GetNumForceConstants(numAtoms, i+2)
-		chromosome := make([]float64, organismSize)
+	if *flags.InitialGuess == "" {
+		for i := 0; i < *flags.DerivativeLevel-1; i++ {
+			organismSize := utils.GetNumForceConstants(numAtoms, i+2)
+			chromosome := make([]float64, organismSize)
 
-		qv := QuartileValues(i + 2)
+			qv := QuartileValues(i + 2)
 
-		for j := 0; j < organismSize; j++ {
-			if quartile {
-				chromosome[j] = QuartileValueDomain(qv, qt)
-				if utils.RandBool() {
-					chromosome[j] = -chromosome[j]
-				}
+			for j := 0; j < organismSize; j++ {
+				if quartile {
+					chromosome[j] = QuartileValueDomain(qv, qt)
+					if utils.RandBool() {
+						chromosome[j] = -chromosome[j]
+					}
 
-			} else {
-				chromosome[j] = utils.RandValueDomain(i + 2)
-				if utils.RandBool() {
-					chromosome[j] = -chromosome[j]
+				} else {
+					mu.Lock()
+					chromosome[j] = utils.RandValueDomain(i + 2)
+					mu.Unlock()
+					if utils.RandBool() {
+						chromosome[j] = -chromosome[j]
+					}
 				}
 			}
-		}
 
-		organism.DNA = append(organism.DNA, chromosome)
+			organism.DNA = append(organism.DNA, chromosome)
+		}
+	} else {
+		organism.DNA = guess.MockB3LYP(*flags.InitialGuess)
 	}
 
 	err := organism.SaveToFile(numAtoms)

@@ -45,7 +45,7 @@ func RunIslands(immPGA, immTGA, immIGA chan models.OrganismAndBias) {
 
 func SendBestMigrant(o models.OrganismAndBias, mig chan<- models.OrganismAndBias, pool []models.Organism) {
 	// First, we need to check if the pool has more than one member.
-	if o.Bias >= 0.5 {
+	if o.Bias <= 0.50 {
 		if len(pool) > 1 {
 			bestIndex, bestHD := 0, 0.0
 			for i, v := range pool {

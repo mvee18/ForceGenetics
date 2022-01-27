@@ -12,7 +12,7 @@ import (
 var (
 	MutationRate         = flag.Float64("mut", 0.05, "mutation rate as a decimal for TGA core")
 	MutationRateInformed = flag.Float64("imut", 0.05, "mutation rate as a decimal for informed GA core")
-	PopSize              = flag.Int("pop", 30, "population size")
+	PopSize              = flag.Int("pop", 50, "population size")
 	NumAtoms             = flag.Int("n", 4, "number of atoms")
 	PoolSize             = flag.Float64("pool", 0.50, "fraction size of the the previous generation that survives")
 	FitnessLimit         = flag.Float64("f", 1.0, "fitness criteria")
@@ -31,6 +31,7 @@ var (
 	Domain15            = flag.Float64("dom15", 1.0, "the starting guess for the maximum values for the cartesian force constants")
 	Domain30            = flag.Float64("dom30", 3.0, "the starting guess for the maximum values for the cartesian force constants")
 	Domain40            = flag.Float64("dom40", 10.0, "the starting guess for the maximum values for the cartesian force constants")
+	InitialGuess        = flag.String("ig", "", "optional: if you have an initial guess directory with the fort files, specify here.")
 )
 
 func init() {

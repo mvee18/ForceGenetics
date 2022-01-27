@@ -2,8 +2,6 @@ package guess
 
 import (
 	"bufio"
-	"fmt"
-	"ga/forces/flags"
 	"ga/forces/models"
 	"ga/forces/utils"
 	"log"
@@ -103,16 +101,16 @@ func MockB3LYP(dirPath string) models.DNA {
 
 	newDNA := mutateDNA(DNA)
 
-	newOrg := models.Organism{
-		DNA:     newDNA,
-		Fitness: 0.0,
-		Path:    "",
-	}
+	// newOrg := models.Organism{
+	// 	DNA:     newDNA,
+	// 	Fitness: 0.0,
+	// 	Path:    "",
+	// }
 
-	newOrg.SaveToFile(*flags.NumAtoms)
-	newOrg.CalcFitness()
+	// newOrg.SaveToFile(*flags.NumAtoms)
+	// newOrg.CalcFitness()
 
-	fmt.Printf("the fitness of the new org is %v\n", newOrg.Fitness)
+	// fmt.Printf("the fitness of the new org is %v\n", newOrg.Fitness)
 
 	return newDNA
 }

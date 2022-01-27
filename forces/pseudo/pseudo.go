@@ -198,7 +198,9 @@ func RunPGA(migrant chan models.OrganismAndBias) {
 		}
 
 		// fmt.Println("added migrant from pga.")
+		// fmt.Println("before add migrant")
 		models.AddMigrant(migrant, best)
+		// fmt.Println("after add migrant")
 
 		if bestOrganism.Fitness < *flags.FitnessLimit {
 			found = true
@@ -213,9 +215,11 @@ func RunPGA(migrant chan models.OrganismAndBias) {
 		} else {
 			population = psuedoCrossover(population)
 
+			// fmt.Println("before add migrant 2")
 			if generation != 0 {
 				population.AddImmigrant(migrant)
 			}
+			// fmt.Println("after add migrant 2")
 
 			if generation%10 == 0 {
 				bestPath := utils.NewOutputFile(fmt.Sprintf("pseudo/best/%d", generation))
