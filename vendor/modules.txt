@@ -1,3 +1,6 @@
+# github.com/go-test/deep v1.0.8
+## explicit
+github.com/go-test/deep
 # github.com/ntBre/chemutils v0.0.0-20211103184338-40100d065f86
 ## explicit
 github.com/ntBre/chemutils/summarize

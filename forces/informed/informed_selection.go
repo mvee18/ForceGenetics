@@ -4,6 +4,7 @@ import (
 	"ga/forces/flags"
 	"ga/forces/quadratic"
 	"math/rand"
+	"os"
 	"sort"
 )
 
@@ -72,12 +73,16 @@ func NaturalSelection(pool InformedPopulation, population InformedPopulation, ta
 		// We combined the parents to yield a new velocity.
 		informed.CombinedVelocity(a.Direction, b.Direction, c.Direction)
 
+		defer os.RemoveAll(informed.Path)
+
 		mutated := DirectedMutation(informed, (InformedOrganism).CalcFitness)
+
+		mutated.SaveToFile(*flags.NumAtoms)
+		mutated.Fitness = mutated.CalcFitness()
 
 		children[i] = mutated
 	}
 
-	//fmt.Println("The length of next is: ", len(children))
 	return children
 }
 

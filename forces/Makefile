@@ -4,6 +4,7 @@
 .PHONY: models/models 
 .PHONY: traditional/traditional 
 .PHONY: islands/islands 
+.PHONY: guess/guess 
 
 pseudo/pseudo: pseudo/*.go
 	cd pseudo; go test . -v -run TestRunPseudoGA -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 80 -pc 0.50 -o ../forces.out; rm -rf forceOrganisms*;
@@ -22,3 +23,6 @@ traditional/traditional: traditional/*.go
 
 islands/islands: islands/*.go
 	cd islands; go test . -v -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 20 -o ../forces.out; rm -rf forceOrganisms*;
+
+guess/guess: guess/*.go
+	cd guess; go test . -v -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 20 -o ../forces.out; rm -rf forceOrganisms*;
