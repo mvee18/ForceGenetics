@@ -136,16 +136,19 @@ func mutateDNA(d models.DNA) models.DNA {
 					<-sema
 					wg.Done()
 				}()
-
-				if utils.RandBool() {
-					newVal := gene + (0.0 + rand.Float64()*(0.1-0.0))
-					incrementAndCheck(&newVal, i+2)
-					newDNA[i][j] = newVal
-
+				if gene == 0.0 {
+					newDNA[i][j] = gene
 				} else {
-					newVal := gene - (0.0 + rand.Float64()*(0.1-0.0))
-					incrementAndCheck(&newVal, i+2)
-					newDNA[i][j] = newVal
+					if utils.RandBool() {
+						newVal := gene + (0.0 + rand.Float64()*(0.1-0.0))
+						incrementAndCheck(&newVal, i+2)
+						newDNA[i][j] = newVal
+
+					} else {
+						newVal := gene - (0.0 + rand.Float64()*(0.1-0.0))
+						incrementAndCheck(&newVal, i+2)
+						newDNA[i][j] = newVal
+					}
 				}
 
 			}(i, j, gene)

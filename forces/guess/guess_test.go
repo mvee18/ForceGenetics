@@ -695,6 +695,7 @@ func TestMockB3LYP(t *testing.T) {
 		t.Run("compare with fort.40", func(t *testing.T) {
 			assertBounds(t, 10.0, 0.90, newDNA[2], fort40)
 		})
+
 	})
 }
 
