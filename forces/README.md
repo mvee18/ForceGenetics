@@ -1,6 +1,6 @@
-# GoForceAlchemy
+# GoForceGenetics
 
-GoForceAlchemy is a genetic algorithm package meant to generate force constants from harmonic frequencies for a number of future uses.
+GoForceGenetics is a genetic algorithm package meant to generate force constants from harmonic frequencies for a number of future uses.
 
 It follows the methods prescribed in *Practical Genetic Algorithms* by Haupt and Haupt (2004) but changed to fit the specific circumstances.
 
