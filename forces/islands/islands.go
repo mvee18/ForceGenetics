@@ -1,7 +1,6 @@
 package islands
 
 import (
-	"fmt"
 	"ga/forces/informed"
 	"ga/forces/models"
 	"ga/forces/pseudo"
@@ -26,17 +25,17 @@ func RunIslands(immPGA, immTGA, immIGA chan models.OrganismAndBias) {
 	for {
 		select {
 		case p := <-immPGA:
-			fmt.Printf("bias of pga: %v\n", p.Bias)
+			// fmt.Printf("bias of pga: %v\n", p.Bias)
 			migrantPool = append(migrantPool, p.Org)
 			SendBestMigrant(p, immPGA, migrantPool)
 
 		case t := <-immTGA:
-			fmt.Printf("bias of tga: %v\n", t.Bias)
+			// fmt.Printf("bias of tga: %v\n", t.Bias)
 			migrantPool = append(migrantPool, t.Org)
 			SendBestMigrant(t, immTGA, migrantPool)
 
 		case i := <-immIGA:
-			fmt.Printf("bias of iga: %v\n", i.Bias)
+			// fmt.Printf("bias of iga: %v\n", i.Bias)
 			migrantPool = append(migrantPool, i.Org)
 			SendBestMigrant(i, immIGA, migrantPool)
 		}
@@ -45,7 +44,7 @@ func RunIslands(immPGA, immTGA, immIGA chan models.OrganismAndBias) {
 
 func SendBestMigrant(o models.OrganismAndBias, mig chan<- models.OrganismAndBias, pool []models.Organism) {
 	// First, we need to check if the pool has more than one member.
-	if o.Bias <= 0.50 {
+	if o.Bias >= 0.50 {
 		if len(pool) > 1 {
 			bestIndex, bestHD := 0, 0.0
 			for i, v := range pool {

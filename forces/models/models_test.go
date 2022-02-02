@@ -159,3 +159,63 @@ func TestCalculateBias(t *testing.T) {
 	})
 
 }
+
+func TestCalculateHD(t *testing.T) {
+	var d = DNA{
+		Chromosome{1.0},
+		Chromosome{3.0, 3.0},
+		// Chromosome{7.0, 8.0},
+	}
+
+	var d2 = DNA{
+		Chromosome{1.0},
+		Chromosome{3.0, 3.0},
+		// Chromosome{-7.0, 8.0},
+	}
+
+	var dopp = DNA{
+		Chromosome{-1.0},
+		Chromosome{-3.0, -3.0},
+		// Chromosome{-7.0, 8.0},
+	}
+
+	var o = Organism{
+		DNA:     d,
+		Path:    "",
+		Fitness: 0.0,
+	}
+
+	var o2 = Organism{
+		DNA:     d2,
+		Path:    "",
+		Fitness: 0.0,
+	}
+
+	var oopp = Organism{
+		DNA:     dopp,
+		Path:    "",
+		Fitness: 0.0,
+	}
+
+	t.Run("testing HD when the same", func(t *testing.T) {
+		hd := CalculateHD(o, o2)
+
+		wanthd := 0.0
+
+		if hd != wanthd {
+			t.Errorf("wrong hamming distance, wanted %v, got %v\n", wanthd, hd)
+		}
+
+	})
+
+	t.Run("testing HD when the exact opposite (maximum)", func(t *testing.T) {
+		hd := CalculateHD(o, oopp)
+
+		wanthd := 3.0
+
+		if hd != wanthd {
+			t.Errorf("wrong hamming distance, wanted %v, got %v\n", wanthd, hd)
+		}
+
+	})
+}
