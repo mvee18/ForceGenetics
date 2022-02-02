@@ -5,6 +5,7 @@ import (
 	"ga/forces/models"
 	"ga/forces/pseudo"
 	trad "ga/forces/traditional"
+	"math"
 )
 
 // Not exactly sure about the methods they share in common.
@@ -74,4 +75,32 @@ func SendBestMigrant(o models.OrganismAndBias, mig chan<- models.OrganismAndBias
 
 func RemoveIndex(s []models.Organism, index int) []models.Organism {
 	return append(s[:index], s[index+1:]...)
+}
+
+// Ai = Ai_prev + (n_pop + n_mig)
+func CalculateAttractiveness(m *models.Migrant, newFitness []float64) {
+	popA := populationAttractiveness(m, newFitness)
+
+	migA := migrantAttractiveness(m)
+
+	m.Attractiveness += (popA + migA)
+}
+
+func populationAttractiveness(m *models.Migrant, newFitness []float64) float64 {
+	residuals := 0.0
+	for i := range newFitness {
+		residuals += (m.PrevFitness[i] - newFitness[i])
+	}
+
+	npop := residuals / float64(len(newFitness))
+
+	return math.Abs(npop)
+}
+
+func migrantAttractiveness(m *models.Migrant) float64 {
+	// Since we only send one migrant, the nMig is 1.
+	// The first migrant in the prev fitness is the most fit.
+	nmig := m.PrevFitness[0] - m.Mig.Fitness
+
+	return math.Abs(nmig)
 }

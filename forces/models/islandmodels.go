@@ -90,3 +90,9 @@ type OrganismAndBias struct {
 	Bias float64
 	Org  Organism
 }
+
+type Migrant struct {
+	Attractiveness float64
+	Mig            Organism
+	PrevFitness    []float64
+}
