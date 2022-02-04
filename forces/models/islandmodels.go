@@ -73,7 +73,7 @@ func CalculateHD(a, b Organism) float64 {
 	return totalHD
 }
 
-func AddImmigrant(p *[]Organism, migrant <-chan OrganismAndBias) {
+func AddImmigrant(p *[]Organism, migrant <-chan Migrant) {
 	// Take the last organism (least fit) off.
 	*p = (*p)[0 : len(*p)-1]
 
@@ -82,17 +82,77 @@ func AddImmigrant(p *[]Organism, migrant <-chan OrganismAndBias) {
 	*p = append(*p, org.Org)
 }
 
-func AddMigrant(migrant chan<- OrganismAndBias, best OrganismAndBias) {
+func AddMigrant(migrant chan<- Migrant, best Migrant) {
 	migrant <- best
 }
 
-type OrganismAndBias struct {
-	Bias float64
-	Org  Organism
-}
+// type OrganismAndBias struct {
+// 	Bias float64
+// 	Org  Organism
+// }
 
 type Migrant struct {
 	Attractiveness float64
-	Mig            Organism
+	Bias           float64
+	Org            Organism
 	PrevFitness    []float64
+}
+
+func MakeMigrant(bias float64, o Organism, pf []float64, nf []float64) *Migrant {
+	// The migrant is initialized after the best organism from the generation
+	// is picked. After,
+	return &Migrant{
+		Attractiveness: 0.0,
+		Bias:           bias,
+		Org:            o,
+		PrevFitness:    pf,
+	}
+}
+
+// Ai = Ai_prev + (n_pop + n_mig)
+func (m *Migrant) CalculateAttractiveness(newFitness []float64) {
+	popA := populationAttractiveness(m, newFitness)
+
+	migA := migrantAttractiveness(m)
+
+	m.Attractiveness += (popA + migA)
+}
+
+func populationAttractiveness(m *Migrant, newFitness []float64) float64 {
+	residuals := 0.0
+	for i := range newFitness {
+		residuals += (m.PrevFitness[i] - newFitness[i])
+	}
+
+	npop := residuals / float64(len(newFitness))
+
+	return math.Abs(npop)
+}
+
+func migrantAttractiveness(m *Migrant) float64 {
+	// Since we only send one migrant, the nMig is 1.
+	// The first migrant in the prev fitness is the most fit.
+	nmig := m.PrevFitness[0] - m.Org.Fitness
+
+	return math.Abs(nmig)
+}
+
+func MakeInitialPrevFitness(n int) []float64 {
+	pf := make([]float64, n)
+
+	for i := range pf {
+		pf[i] = 99999.99
+	}
+
+	return pf
+}
+
+func GatherFitness(pop []Organism) []float64 {
+	nf := make([]float64, len(pop))
+
+	for i := range pop {
+		nf[i] = pop[i].Fitness
+	}
+
+	return nf
 }

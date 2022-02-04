@@ -322,24 +322,30 @@ func GetBest(population InformedPopulation) InformedOrganism {
 	return population[0]
 }
 
-func RunInformedGA(migrant chan models.OrganismAndBias) {
+func RunInformedGA(migrant chan models.Migrant) {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := CreateInformedPopulation()
 
 	found := false
 	generation := 0
+	prevFitness := models.MakeInitialPrevFitness(len(population))
+
 	for !found {
 		generation++
 		// fmt.Printf("Generation: %v\n", generation)
 		bestOrganism := GetBest(population)
 
-		best := models.OrganismAndBias{
-			Org:  bestOrganism.Organism,
-			Bias: population.CalculateBias(),
-		}
+		nf := population.GatherFitness()
 
-		models.AddMigrant(migrant, best)
+		mig := models.MakeMigrant(
+			population.CalculateBias(),
+			bestOrganism.Organism,
+			prevFitness,
+			nf,
+		)
+
+		models.AddMigrant(migrant, *mig)
 
 		if bestOrganism.Fitness < *flags.FitnessLimit {
 			found = true
@@ -370,6 +376,8 @@ func RunInformedGA(migrant chan models.OrganismAndBias) {
 				}
 			}
 
+			prevFitness = nf
+
 			delFolders(pool, bestOrganism)
 			delFolders(population, bestOrganism)
 
@@ -398,7 +406,7 @@ func delFolders(o InformedPopulation, topOrganism InformedOrganism) {
 	}
 }
 
-func (p *InformedPopulation) AddImmigrant(migrant <-chan models.OrganismAndBias) {
+func (p *InformedPopulation) AddImmigrant(migrant <-chan models.Migrant) {
 	// Take the last organism (least fit) off.
 	*p = (*p)[0 : len(*p)-1]
 
@@ -406,4 +414,14 @@ func (p *InformedPopulation) AddImmigrant(migrant <-chan models.OrganismAndBias)
 	org := <-migrant
 
 	*p = append(*p, makeAndSetOrganism(&org.Org))
+}
+
+func (p *InformedPopulation) GatherFitness() []float64 {
+	nf := make([]float64, len(*p))
+
+	for i := range *p {
+		nf[i] = (*p)[i].Fitness
+	}
+
+	return nf
 }

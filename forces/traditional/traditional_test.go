@@ -28,12 +28,12 @@ func TestAddMigrant(t *testing.T) {
 			Path:    "",
 		}
 
-		mig := models.OrganismAndBias{
+		mig := models.Migrant{
 			Org:  migOrg,
 			Bias: 0.0,
 		}
 
-		migrants := make(chan models.OrganismAndBias)
+		migrants := make(chan models.Migrant)
 
 		// Add migrant to channel.
 		// Note: you cannot just do func(), you need go func().

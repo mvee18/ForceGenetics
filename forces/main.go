@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	immPGA = make(chan models.OrganismAndBias)
-	immTGA = make(chan models.OrganismAndBias)
-	immIGA = make(chan models.OrganismAndBias)
+	immPGA = make(chan models.Migrant)
+	immTGA = make(chan models.Migrant)
+	immIGA = make(chan models.Migrant)
 )
 
 func main() {

@@ -172,7 +172,7 @@ func delFolders(o []models.Organism, topOrganism models.Organism) {
 	}
 }
 
-func (p *PPopulation) AddImmigrant(migrant <-chan models.OrganismAndBias) {
+func (p *PPopulation) AddImmigrant(migrant <-chan models.Migrant) {
 	// Take the last organism (least fit) off.
 	*p = (*p)[0 : len(*p)-1]
 
@@ -181,25 +181,31 @@ func (p *PPopulation) AddImmigrant(migrant <-chan models.OrganismAndBias) {
 	*p = append(*p, org.Org)
 }
 
-func RunPGA(migrant chan models.OrganismAndBias) {
+func RunPGA(migrant chan models.Migrant) {
 	start := time.Now()
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := CreatePseudoPopulation()
 
 	found := false
 	generation := 0
+	prevFitness := models.MakeInitialPrevFitness(len(population))
+
 	for !found {
 		generation++
 		bestOrganism := selection.GetBest(population)
 
-		best := models.OrganismAndBias{
-			Org:  bestOrganism,
-			Bias: models.CalculateBias(population),
-		}
+		nf := models.GatherFitness(population)
+
+		mig := models.MakeMigrant(
+			models.CalculateBias(population),
+			bestOrganism,
+			prevFitness,
+			nf,
+		)
 
 		// fmt.Println("added migrant from pga.")
 		// fmt.Println("before add migrant")
-		models.AddMigrant(migrant, best)
+		models.AddMigrant(migrant, *mig)
 		// fmt.Println("after add migrant")
 
 		if bestOrganism.Fitness < *flags.FitnessLimit {
@@ -232,6 +238,8 @@ func RunPGA(migrant chan models.OrganismAndBias) {
 					models.LogTerminated(pseudoOutFile)
 				}
 			}
+
+			prevFitness = nf
 
 			delFolders(population, bestOrganism)
 		}

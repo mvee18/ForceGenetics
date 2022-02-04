@@ -1,11 +1,12 @@
 package islands
 
 import (
+	"fmt"
 	"ga/forces/informed"
 	"ga/forces/models"
 	"ga/forces/pseudo"
 	trad "ga/forces/traditional"
-	"math"
+	"reflect"
 )
 
 // Not exactly sure about the methods they share in common.
@@ -14,50 +15,51 @@ type Island interface {
 }
 
 // We will gather than on the mig channel, then disperse them across the imm channels for each one.
-func RunIslands(immPGA, immTGA, immIGA chan models.OrganismAndBias) {
+func RunIslands(immPGA, immTGA, immIGA chan models.Migrant) {
 	go pseudo.RunPGA(immPGA)
 
 	go trad.RunTGA(immTGA)
 
 	go informed.RunInformedGA(immIGA)
 
-	migrantPool := make([]models.Organism, 0)
+	migrantPool := make([]models.Migrant, 0)
 
 	for {
 		select {
 		case p := <-immPGA:
 			// fmt.Printf("bias of pga: %v\n", p.Bias)
-			migrantPool = append(migrantPool, p.Org)
-			SendBestMigrant(p, immPGA, migrantPool)
+			migrantPool = append(migrantPool, p)
+			MigrationProtocol(p, immPGA, &migrantPool)
 
 		case t := <-immTGA:
 			// fmt.Printf("bias of tga: %v\n", t.Bias)
-			migrantPool = append(migrantPool, t.Org)
-			SendBestMigrant(t, immTGA, migrantPool)
+			migrantPool = append(migrantPool, t)
+			MigrationProtocol(t, immTGA, &migrantPool)
 
 		case i := <-immIGA:
 			// fmt.Printf("bias of iga: %v\n", i.Bias)
-			migrantPool = append(migrantPool, i.Org)
-			SendBestMigrant(i, immIGA, migrantPool)
+			migrantPool = append(migrantPool, i)
+			MigrationProtocol(i, immIGA, &migrantPool)
 		}
 	}
 }
 
-func SendBestMigrant(o models.OrganismAndBias, mig chan<- models.OrganismAndBias, pool []models.Organism) {
+/*
+func SendBestMigrant(o models.Migrant, mig chan<- models.Migrant, pool []models.Migrant) {
 	// First, we need to check if the pool has more than one member.
 	if o.Bias >= 0.50 {
 		if len(pool) > 1 {
 			bestIndex, bestHD := 0, 0.0
 			for i, v := range pool {
-				hd := models.CalculateHD(o.Org, v)
+				hd := models.CalculateHD(o.Org, v.Org)
 				if hd > bestHD {
 					bestIndex = i
 					bestHD = hd
 				}
 			}
 
-			mig <- models.OrganismAndBias{
-				Org:  pool[bestIndex],
+			mig <- models.Migrant{
+				Org:  pool[bestIndex].Org,
 				Bias: 0.0,
 			}
 
@@ -65,42 +67,81 @@ func SendBestMigrant(o models.OrganismAndBias, mig chan<- models.OrganismAndBias
 		}
 
 	} else {
-		mig <- models.OrganismAndBias{
+		mig <- models.Migrant{
 			Org:  o.Org,
 			Bias: 0.0,
 		}
 
 	}
 }
+*/
 
-func RemoveIndex(s []models.Organism, index int) []models.Organism {
-	return append(s[:index], s[index+1:]...)
-}
+func MigrationProtocol(o models.Migrant, mig chan<- models.Migrant, pool *[]models.Migrant) {
+	// First, we need to check if the pool has more than one member.
 
-// Ai = Ai_prev + (n_pop + n_mig)
-func CalculateAttractiveness(m *models.Migrant, newFitness []float64) {
-	popA := populationAttractiveness(m, newFitness)
+	fmt.Println("len of pool in: ", len(*pool))
+	for len(*pool) != 0 {
+		if len(*pool) > 1 {
+			if o.Bias >= 0.50 {
+				bestIndex, bestHD := 0, 0.0
+				for i, v := range *pool {
+					hd := models.CalculateHD(o.Org, v.Org)
+					if hd > bestHD {
+						bestIndex = i
+						bestHD = hd
+					}
+				}
 
-	migA := migrantAttractiveness(m)
+				mig <- models.Migrant{
+					Org:            (*pool)[bestIndex].Org,
+					Attractiveness: (*pool)[bestIndex].Attractiveness,
+				}
 
-	m.Attractiveness += (popA + migA)
-}
+				fmt.Println("sent via bias, pool len: ", len(*pool))
+				*pool = RemoveIndex(*pool, bestIndex)
 
-func populationAttractiveness(m *models.Migrant, newFitness []float64) float64 {
-	residuals := 0.0
-	for i := range newFitness {
-		residuals += (m.PrevFitness[i] - newFitness[i])
+				return
+
+			} else {
+				bestAIndex, bestA := 0, 0.0
+				for i, v := range *pool {
+					if v.Attractiveness > bestA {
+						bestAIndex = i
+						bestA = v.Attractiveness
+					}
+				}
+
+				mig <- models.Migrant{
+					Org:            (*pool)[bestAIndex].Org,
+					Attractiveness: (*pool)[bestAIndex].Attractiveness,
+				}
+
+				fmt.Println("sent via attractiveness, pool len: ", len(*pool))
+				*pool = RemoveIndex(*pool, bestAIndex)
+
+				return
+			}
+
+		} else {
+			mig <- models.Migrant{
+				Org:            o.Org,
+				Attractiveness: o.Attractiveness,
+			}
+
+			fmt.Println("sent to self, pool len: ", len(*pool))
+
+			for i, v := range *pool {
+				if reflect.DeepEqual(o, v) {
+					*pool = RemoveIndex(*pool, i)
+					return
+				}
+			}
+		}
+
 	}
 
-	npop := residuals / float64(len(newFitness))
-
-	return math.Abs(npop)
 }
 
-func migrantAttractiveness(m *models.Migrant) float64 {
-	// Since we only send one migrant, the nMig is 1.
-	// The first migrant in the prev fitness is the most fit.
-	nmig := m.PrevFitness[0] - m.Mig.Fitness
-
-	return math.Abs(nmig)
+func RemoveIndex(s []models.Migrant, index int) []models.Migrant {
+	return append(s[:index], s[index+1:]...)
 }
