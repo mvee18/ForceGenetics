@@ -6,7 +6,6 @@ import (
 	"ga/forces/models"
 	"ga/forces/pseudo"
 	trad "ga/forces/traditional"
-	"reflect"
 )
 
 // Not exactly sure about the methods they share in common.
@@ -27,17 +26,17 @@ func RunIslands(immPGA, immTGA, immIGA chan models.Migrant) {
 	for {
 		select {
 		case p := <-immPGA:
-			// fmt.Printf("bias of pga: %v\n", p.Bias)
+			fmt.Printf("bias of pga: %v\n", p.Bias)
 			migrantPool = append(migrantPool, p)
 			MigrationProtocol(p, immPGA, &migrantPool)
 
 		case t := <-immTGA:
-			// fmt.Printf("bias of tga: %v\n", t.Bias)
+			fmt.Printf("bias of tga: %v\n", t.Bias)
 			migrantPool = append(migrantPool, t)
 			MigrationProtocol(t, immTGA, &migrantPool)
 
 		case i := <-immIGA:
-			// fmt.Printf("bias of iga: %v\n", i.Bias)
+			fmt.Printf("bias of iga: %v\n", i.Bias)
 			migrantPool = append(migrantPool, i)
 			MigrationProtocol(i, immIGA, &migrantPool)
 		}
@@ -130,12 +129,14 @@ func MigrationProtocol(o models.Migrant, mig chan<- models.Migrant, pool *[]mode
 
 			fmt.Println("sent to self, pool len: ", len(*pool))
 
-			for i, v := range *pool {
-				if reflect.DeepEqual(o, v) {
-					*pool = RemoveIndex(*pool, i)
-					return
-				}
-			}
+			// for i, v := range *pool {
+			// 	if reflect.DeepEqual(o, v) {
+			// 		*pool = RemoveIndex(*pool, i)
+			// 		return
+			// 	}
+			// }
+
+			return
 		}
 
 	}

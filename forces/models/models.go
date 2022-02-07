@@ -8,6 +8,7 @@ import (
 	"ga/forces/utils"
 	"io/ioutil"
 	"log"
+	"math"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -17,6 +18,14 @@ import (
 
 	"github.com/ntBre/chemutils/summarize"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+	s1 := rand.NewSource(time.Now().UnixNano() + 2561)
+	r1 = rand.New(s1)
+}
+
+var r1 *rand.Rand
 
 func init() {
 	TargetFrequencies, TargetRotational, TargetFund = utils.ReadInput(*flags.FreqInputFile)
@@ -136,17 +145,37 @@ func (d *Organism) CalcFitness() {
 func (o *Organism) Mutate() {
 	for c, chr := range o.DNA {
 		for i := 0; i < len(chr); i++ {
-			chance := rand.Float64()
+			chance := r1.Float64()
 			if chance <= *flags.MutationRate {
-				o.DNA[c][i] = utils.RandValueDomain(c + 2)
+
 				if utils.RandBool() {
-					o.DNA[c][i] = -o.DNA[c][i]
+					o.DNA[c][i] += utils.RandValueDomain(c + 2)
+					incrementAndCheck(&o.DNA[c][i], c+2)
+				} else {
+					o.DNA[c][i] -= utils.RandValueDomain(c + 2)
+					incrementAndCheck(&o.DNA[c][i], c+2)
 				}
 
 				if chance <= *flags.ZeroChance {
 					o.DNA[c][i] = 0.0
 				}
 			}
+		}
+	}
+}
+
+func incrementAndCheck(v *float64, dn int) {
+	dom := utils.SelectDomain(dn)
+
+	// If the value is out of bounds...
+	for math.Abs(*v) > dom {
+		if *v > 0 {
+			// If positive, subtract until it is below...
+			*v -= r1.Float64() * dom
+
+		} else {
+			// Else, if negative, add until within the bounds.
+			*v += r1.Float64() * dom
 		}
 	}
 }
