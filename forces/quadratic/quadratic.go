@@ -7,13 +7,17 @@ import (
 	"ga/forces/utils"
 	"math"
 	"math/rand"
+	"sort"
 )
 
 // Suppose that we have three parents. We can fit a quadratic equation using the following terms from each:
 
 var ErrLinearFailed = errors.New("maximum number of iterations reached with reduction of beta")
 
-func QuadraticTerms(p1, p2, p3 *models.Organism) models.Organism {
+func QuadraticTerms(o1, o2, o3 *models.Organism) models.Organism {
+
+	p1, p2, p3 := reOrderOrganisms([]*models.Organism{o1, o2, o3})
+
 	childDNA := make(models.DNA, len(p1.DNA))
 
 	for i, pChr := range p1.DNA {
@@ -70,11 +74,31 @@ func QuadraticTerms(p1, p2, p3 *models.Organism) models.Organism {
 	return child
 }
 
+// The fitness function is actually 1/F, since a lower fitness is better. By
+// finding the maximum fitness, we are actively working against the process.
+
+func reOrderOrganisms(o []*models.Organism) (models.Organism, models.Organism, models.Organism) {
+	p := make([]models.Organism, len(o))
+
+	for i := range p {
+		p[i].DNA = (o)[i].DNA
+		// p[i].Fitness = 1 / (o)[i].Fitness
+		p[i].Fitness = (o)[i].Fitness
+	}
+
+	sort.SliceStable(p, func(i, j int) bool {
+		return p[i].Fitness < p[j].Fitness
+	})
+
+	return p[0], p[1], p[2]
+
+}
+
 func calcMaximum(dn int, aj, bj float64) (float64, bool) {
 	Ej := -bj / (2 * aj)
 	// fmt.Printf("Ej is %v, and aj is %v\n", Ej, aj)
 
-	if 2*aj < 0 && math.Abs(Ej) < utils.SelectDomain(dn) {
+	if 2*aj > 0 && math.Abs(Ej) < utils.SelectDomain(dn) {
 		return Ej, true
 	} else {
 		return Ej, false

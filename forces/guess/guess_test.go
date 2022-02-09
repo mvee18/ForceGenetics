@@ -1,6 +1,7 @@
 package guess
 
 import (
+	"fmt"
 	"ga/forces/models"
 	"math"
 	"path/filepath"
@@ -710,4 +711,26 @@ func assertBounds(t *testing.T, upper float64, diffMax float64, new, old []float
 			t.Errorf("outside of testing bounds at index %d with val %v. Expected %v\n", i, v, old[i])
 		}
 	}
+}
+
+func TestCalcFitness(t *testing.T) {
+	t.Run("test fitness from real f12", func(t *testing.T) {
+		fp, err := filepath.Abs("../testfiles/h2co/4th")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		dna := ReadDNA(fp)
+
+		o := models.Organism{
+			DNA:     dna,
+			Path:    "",
+			Fitness: 0.0,
+		}
+
+		o.SaveToFile(4)
+		o.CalcFitness()
+
+		fmt.Println(o.Fitness)
+	})
 }
