@@ -19,16 +19,18 @@ import (
 	"github.com/ntBre/chemutils/summarize"
 )
 
+var r1 *rand.Rand
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	s1 := rand.NewSource(time.Now().UnixNano() + 2561)
 	r1 = rand.New(s1)
 }
 
-var r1 *rand.Rand
-
 func init() {
 	TargetFrequencies, TargetRotational, TargetFund = utils.ReadInput(*flags.FreqInputFile)
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 = rand.New(s1)
 }
 
 type DNA []Chromosome
@@ -141,12 +143,17 @@ func (d *Organism) CalcFitness() {
 	ParseOutput(d, outBytes, *flags.DerivativeLevel)
 }
 
-// Mutation function is unclear. There are many ideas in the gaussian crossover paper.
 func (o *Organism) Mutate() {
 	for c, chr := range o.DNA {
 		for i := 0; i < len(chr); i++ {
 			chance := r1.Float64()
 			if chance <= *flags.MutationRate {
+				if *flags.InitialGuess != "" && o.DNA[c][i] == 0.0 {
+					continue
+				}
+				// New mutation value is a normally distributed value centered around the old value with a std. dev of 5% of the domain.
+				newVal := r1.NormFloat64()*(utils.SelectDomain(c+2)*0.05) + o.DNA[c][i]
+				o.DNA[c][i] = newVal
 
 				if utils.RandBool() {
 					o.DNA[c][i] += utils.RandValueDomain(c + 2)
