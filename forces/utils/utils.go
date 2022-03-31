@@ -64,6 +64,7 @@ func CalcDifference(gen []float64, target []float64) (float64, error) {
 		fmt.Printf("error in generation of summarize")
 		return 9999.0, ErrNullSummarize
 	}
+
 	var d float64
 	for i, v := range padSlice(gen, target) {
 		d += squareDifference(v, target[i])

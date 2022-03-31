@@ -14,12 +14,13 @@ import (
 )
 
 var (
-	tradOutFile   string = utils.NewOutputFile("traditional/trad.out")
+	tradOutFile string = utils.NewOutputFile("traditional/trad.out")
 	bestPathFinal string = utils.NewOutputFile("traditional/best/final")
 )
 
 func RunTGA(migrant chan models.Migrant) {
 	start := time.Now()
+
 	rand.Seed(time.Now().UTC().UnixNano())
 	population := selection.CreatePopulation()
 

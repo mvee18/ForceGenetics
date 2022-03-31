@@ -715,7 +715,8 @@ func assertBounds(t *testing.T, upper float64, diffMax float64, new, old []float
 
 func TestCalcFitness(t *testing.T) {
 	t.Run("test fitness from real f12", func(t *testing.T) {
-		fp, err := filepath.Abs("../testfiles/h2co/4th")
+		// fp, err := filepath.Abs("../testfiles/h2o/4th")
+		fp, err := filepath.Abs("../traditional/best/200")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -728,7 +729,7 @@ func TestCalcFitness(t *testing.T) {
 			Fitness: 0.0,
 		}
 
-		o.SaveToFile(4)
+		o.SaveToFile(3)
 		o.CalcFitness()
 
 		fmt.Println(o.Fitness)

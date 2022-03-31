@@ -150,21 +150,19 @@ func (o *Organism) Mutate() {
 			if chance <= *flags.MutationRate {
 				if *flags.InitialGuess != "" && o.DNA[c][i] == 0.0 {
 					continue
-				}
-				// New mutation value is a normally distributed value centered around the old value with a std. dev of 5% of the domain.
-				newVal := r1.NormFloat64()*(utils.SelectDomain(c+2)*0.05) + o.DNA[c][i]
-				o.DNA[c][i] = newVal
-
-				if utils.RandBool() {
-					o.DNA[c][i] += utils.RandValueDomain(c + 2)
-					incrementAndCheck(&o.DNA[c][i], c+2)
 				} else {
-					o.DNA[c][i] -= utils.RandValueDomain(c + 2)
-					incrementAndCheck(&o.DNA[c][i], c+2)
-				}
+					// New mutation value is a normally distributed value centered around the old value with a std. dev of 5% of the domain.
+					newVal := r1.NormFloat64()*(utils.SelectDomain(c+2)*0.05) + o.DNA[c][i]
+					o.DNA[c][i] = newVal
 
-				if chance <= *flags.ZeroChance {
-					o.DNA[c][i] = 0.0
+					if utils.RandBool() {
+						o.DNA[c][i] = -o.DNA[c][i]
+						incrementAndCheck(&o.DNA[c][i], c+2)
+					}
+
+					if chance <= *flags.ZeroChance {
+						o.DNA[c][i] = 0.0
+					}
 				}
 			}
 		}
@@ -230,7 +228,7 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 	r := bytes.NewReader(by)
 	result := summarize.Spectro(r)
 
-	// fmt.Printf("%#v", result)
+	//fmt.Printf("%#v", result)
 	// fmt.Println(d.Path)
 
 	fitness := 9999.0
@@ -275,7 +273,7 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 			return
 		}
 
-		harmFitness, err := utils.CalcDifference(result.Harm, TargetFrequencies)
+		harmFitness, err := utils.CalcDifference(result.LX, TargetFrequencies)
 		if err != nil {
 			if err == utils.ErrNullSummarize {
 				fitness = 9999.99

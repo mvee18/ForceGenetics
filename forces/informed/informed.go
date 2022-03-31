@@ -217,6 +217,8 @@ func DirectedMutation(i InformedOrganism, g func(inf InformedOrganism) float64) 
 
 	for ind, v := range i.DNA {
 		for j, gene := range v {
+
+
 			iCopy := i
 			sema <- struct{}{}
 			wg.Add(1)
@@ -225,6 +227,10 @@ func DirectedMutation(i InformedOrganism, g func(inf InformedOrganism) float64) 
 					<-sema
 					wg.Done()
 				}()
+
+				if *flags.InitialGuess != "" && gene == 0.0 {
+					return
+				}
 
 				mu.Lock()
 				mutationChance := r1.Float64()

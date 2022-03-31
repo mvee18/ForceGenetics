@@ -108,21 +108,20 @@ func calcMaximum(dn int, aj, bj float64) (float64, bool) {
 // These need to be sorted.
 func LinearInterpolation(iterations *float64, alpha, beta, m, d float64) (float64, error) {
 	// CrossoverPoint
-	if *iterations > 3 {
-		return 0.0, ErrLinearFailed
+	for *iterations <= 3 {
+		pNew := beta*(m-d) + m
+
+		if math.Abs(pNew) < alpha {
+			*iterations = 0.0
+			return pNew, nil
+
+		} else {
+			bNew := beta / 2
+			lin, err := LinearInterpolation(iterations, alpha, bNew, m, d)
+			*iterations = *iterations + 1.0
+			return lin, err
+		}
 	}
 
-	pNew := beta*(m-d) + m
-
-	if math.Abs(pNew) < alpha {
-		*iterations = 0.0
-		return pNew, nil
-
-	} else {
-		bNew := beta / 2
-		lin, err := LinearInterpolation(iterations, alpha, bNew, m, d)
-		*iterations = *iterations + 1.0
-		return lin, err
-	}
-
+	return 0.0, ErrLinearFailed
 }

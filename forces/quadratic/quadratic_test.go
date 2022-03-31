@@ -55,7 +55,7 @@ func TestGaussianFit(t *testing.T) {
 			},
 
 			Path:    "",
-			Fitness: 15,
+			Fitness: 30,
 		}
 
 		child := QuadraticTerms(&a, &b, &c)
