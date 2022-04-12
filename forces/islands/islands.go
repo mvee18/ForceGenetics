@@ -6,7 +6,6 @@ import (
 	"ga/forces/models"
 	"ga/forces/pseudo"
 	trad "ga/forces/traditional"
-
 )
 
 // Not exactly sure about the methods they share in common.

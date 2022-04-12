@@ -2,15 +2,23 @@ package quadratic
 
 import (
 	"errors"
-	"fmt"
 	"ga/forces/models"
 	"ga/forces/utils"
 	"math"
 	"math/rand"
 	"sort"
+	"time"
 )
 
 // Suppose that we have three parents. We can fit a quadratic equation using the following terms from each:
+
+var r1 *rand.Rand
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+	s1 := rand.NewSource(time.Now().UnixNano() + 2561)
+	r1 = rand.New(s1)
+}
 
 var ErrLinearFailed = errors.New("maximum number of iterations reached with reduction of beta")
 
@@ -43,11 +51,10 @@ func QuadraticTerms(o1, o2, o3 *models.Organism) models.Organism {
 
 			maximum, valid := calcMaximum(i+2, aj, bj)
 			if !valid {
-				beta := rand.Float64()
-				iterations := 0.0
-				linear, err := LinearInterpolation(&iterations, utils.SelectDomain(i+2), beta, p1.DNA[i][j], p3.DNA[i][j])
+				beta := r1.Float64()
+				linear, err := LinearInterpolation(utils.SelectDomain(i+2), beta, p1.DNA[i][j], p3.DNA[i][j])
 				if err == ErrLinearFailed {
-					fmt.Println(err)
+					// fmt.Println(err)
 					p := rand.Intn(3)
 					switch p {
 					case 0:
@@ -106,22 +113,38 @@ func calcMaximum(dn int, aj, bj float64) (float64, bool) {
 }
 
 // These need to be sorted.
-func LinearInterpolation(iterations *float64, alpha, beta, m, d float64) (float64, error) {
+func LinearInterpolation(alpha, beta, m, d float64) (float64, error) {
 	// CrossoverPoint
-	for *iterations <= 3 {
-		pNew := beta*(m-d) + m
+	// for *iterations <= 3 {
+	// 	pNew := beta*(m-d) + m
 
-		if math.Abs(pNew) < alpha {
-			*iterations = 0.0
-			return pNew, nil
+	// 	if math.Abs(pNew) < alpha {
+	// 		*iterations = 0.0
+	// 		return pNew, nil
 
-		} else {
-			bNew := beta / 2
-			lin, err := LinearInterpolation(iterations, alpha, bNew, m, d)
-			*iterations = *iterations + 1.0
-			return lin, err
+	// 	} else {
+	// 		bNew := beta / 2
+	// 		lin, err := LinearInterpolation(iterations, alpha, bNew, m, d)
+	// 		*iterations = *iterations + 1.0
+	// 		return lin, err
+	// 	}
+	// }
+	// 	pNew := beta*(m-d) + m
+	iterations := new(int)
+
+	pNew := beta*(m-d) + m
+	// fmt.Printf("the pnew is %v\n", pNew)
+
+	for math.Abs(pNew) > alpha {
+		bNew := beta / 2
+		pNew = bNew*(m-d) + m
+
+		*iterations = *iterations + 1
+		// fmt.Printf("the number of iterations is %v\n", *iterations)
+		if *iterations > 3 {
+			return 0.0, ErrLinearFailed
 		}
 	}
 
-	return 0.0, ErrLinearFailed
+	return pNew, nil
 }

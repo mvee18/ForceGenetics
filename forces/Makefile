@@ -5,6 +5,7 @@
 .PHONY: traditional/traditional 
 .PHONY: islands/islands 
 .PHONY: guess/guess 
+.PHONY: quadratic/quadratic 
 
 pseudo/pseudo: pseudo/*.go
 	cd pseudo; go test . -v -run TestRunPseudoGA -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 80 -pc 0.50 -o ../forces.out; rm -rf forceOrganisms*;
@@ -26,3 +27,6 @@ islands/islands: islands/*.go
 
 guess/guess: guess/*.go
 	cd guess; go test . -v -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 20 -o ../forces.out; rm -rf forceOrganisms*;
+
+quadratic/quadratic: quadratic/*.go
+	cd quadratic; go test . -v -run TestLinearInterpolation -args -f 1.0 -sp ../spectro -i ../spectro.in -fi ../forces.inp -pop 20 -o ../forces.out; rm -rf forceOrganisms*;

@@ -8,9 +8,7 @@ import (
 
 func TestLinearInterpolation(t *testing.T) {
 	t.Run("testing linear interpolation recursion with disparate parents", func(t *testing.T) {
-		iter := 0.0
-
-		lin, err := LinearInterpolation(&iter, 1.0, 0.67, 0.31, 0.62)
+		lin, err := LinearInterpolation(1.0, 2.00, 1.0, 0.62)
 		if err != nil {
 			t.Error(err)
 		}
