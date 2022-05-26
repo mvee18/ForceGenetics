@@ -190,3 +190,12 @@ func NewOutputFile(path string) string {
 
 	return newDir
 }
+
+func CalcAverage(d []float64) float64 {
+	var sum float64
+	for _, v := range d {
+		sum += v
+	}
+
+	return sum / float64(len(d))
+}

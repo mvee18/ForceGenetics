@@ -12,12 +12,8 @@ import (
 
 // Suppose that we have three parents. We can fit a quadratic equation using the following terms from each:
 
-var r1 *rand.Rand
-
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	s1 := rand.NewSource(time.Now().UnixNano() + 2561)
-	r1 = rand.New(s1)
 }
 
 var ErrLinearFailed = errors.New("maximum number of iterations reached with reduction of beta")
@@ -39,6 +35,8 @@ func QuadraticTerms(o1, o2, o3 *models.Organism) models.Organism {
 		Fitness: 0,
 	}
 
+	// fmt.Println("made children structs")
+
 	for i, chromosome := range p1.DNA {
 		for j := range chromosome {
 			aj := 1 / (p3.DNA[i][j] - p2.DNA[i][j]) * (((p3.Fitness - p1.Fitness) / (p3.DNA[i][j] - p1.DNA[i][j])) - ((p2.Fitness - p1.Fitness) / (p2.DNA[i][j] - p1.DNA[i][j])))
@@ -49,13 +47,19 @@ func QuadraticTerms(o1, o2, o3 *models.Organism) models.Organism {
 
 			// fmt.Println(aj, bj, cj)
 
+			// fmt.Println("made aj and bj")
+
 			maximum, valid := calcMaximum(i+2, aj, bj)
 			if !valid {
-				beta := r1.Float64()
+				beta := rand.Float64()
+
 				linear, err := LinearInterpolation(utils.SelectDomain(i+2), beta, p1.DNA[i][j], p3.DNA[i][j])
 				if err == ErrLinearFailed {
 					// fmt.Println(err)
 					p := rand.Intn(3)
+
+					// fmt.Println("made p")
+
 					switch p {
 					case 0:
 						child.DNA[i][j] = p1.DNA[i][j]
@@ -69,15 +73,18 @@ func QuadraticTerms(o1, o2, o3 *models.Organism) models.Organism {
 					}
 
 				} else {
+					// fmt.Println("using linear")
 					child.DNA[i][j] = linear
 				}
 
 			} else {
+				// fmt.Println("using max")
 				child.DNA[i][j] = maximum
 			}
 		}
 	}
 
+	// fmt.Println("subroutine complete")
 	return child
 }
 

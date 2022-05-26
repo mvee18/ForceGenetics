@@ -1,8 +1,10 @@
 package main
 
 import (
+	"ga/forces/flags"
 	"ga/forces/islands"
 	"ga/forces/models"
+	trad "ga/forces/traditional"
 )
 
 var (
@@ -12,5 +14,11 @@ var (
 )
 
 func main() {
-	islands.RunIslands(immPGA, immTGA, immIGA)
+	switch *flags.GAs {
+	case "all":
+		islands.RunIslands(immPGA, immTGA, immIGA)
+	case "tga":
+		trad.RunTGAOnly()
+	}
+
 }

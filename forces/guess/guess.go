@@ -18,12 +18,7 @@ import (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	s1 := rand.NewSource(time.Now().UnixNano() + 2561)
-	r1 = rand.New(s1)
 }
-
-var mu sync.Mutex
-var r1 *rand.Rand
 
 func ReadDNA(dirPath string) models.DNA {
 	fort15 := path.Join(dirPath, "fort.15")
@@ -140,12 +135,12 @@ func mutateDNA(d models.DNA) models.DNA {
 					newDNA[i][j] = gene
 				} else {
 					if utils.RandBool() {
-						newVal := gene + (0.0 + rand.Float64()*(0.1-0.0))
+						newVal := gene + (0.0 + rand.Float64()*(0.01-0.0))
 						incrementAndCheck(&newVal, i+2)
 						newDNA[i][j] = newVal
 
 					} else {
-						newVal := gene - (0.0 + rand.Float64()*(0.1-0.0))
+						newVal := gene - (0.0 + rand.Float64()*(0.01-0.0))
 						incrementAndCheck(&newVal, i+2)
 						newDNA[i][j] = newVal
 					}
@@ -165,15 +160,11 @@ func incrementAndCheck(v *float64, dn int) {
 	for math.Abs(*v) > dom {
 		if *v > 0 {
 			// If positive, subtract until it is below...
-			mu.Lock()
-			*v -= (0.0 + rand.Float64()*(0.1-0.0))
-			mu.Unlock()
+			*v -= (0.0 + rand.Float64()*(0.01-0.0))
 
 		} else {
 			// Else, if negative, add until within the bounds.
-			mu.Lock()
-			*v += (0.0 + rand.Float64()*(0.1-0.0))
-			mu.Unlock()
+			*v += (0.0 + rand.Float64()*(0.01-0.0))
 		}
 	}
 

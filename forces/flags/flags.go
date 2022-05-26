@@ -32,7 +32,10 @@ var (
 	Domain30            = flag.Float64("dom30", 3.0, "the starting guess for the maximum values for the cartesian force constants")
 	Domain40            = flag.Float64("dom40", 10.0, "the starting guess for the maximum values for the cartesian force constants")
 	InitialGuess        = flag.String("ig", "", "optional: if you have an initial guess directory with the fort files, specify here.")
+	GAs                 = flag.String("ga", "all", "the GA to use, tga, pga, iga, or all")
 )
+
+var InitialMutationRate = *MutationRate
 
 func init() {
 	var _ = func() bool {

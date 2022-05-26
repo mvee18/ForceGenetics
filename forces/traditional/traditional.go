@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	tradOutFile string = utils.NewOutputFile("traditional/trad.out")
+	tradOutFile   string = utils.NewOutputFile("traditional/trad.out")
 	bestPathFinal string = utils.NewOutputFile("traditional/best/final")
 )
 
@@ -82,6 +82,75 @@ func RunTGA(migrant chan models.Migrant) {
 
 	}
 
+}
+
+func RunTGAOnly() {
+	start := time.Now()
+
+	rand.Seed(time.Now().UTC().UnixNano())
+	population := selection.CreatePopulation()
+
+	found := false
+	generation := 0
+
+	// Initialize previous fitness for comparison.
+	// prevFitness := 9999.9
+
+	for !found {
+		generation++
+		bestOrganism := selection.GetBest(population)
+
+		// Add migrant to pool.
+		// fmt.Println("migrant added from traditional ga")
+
+		if bestOrganism.Fitness < *flags.FitnessLimit {
+			found = true
+
+			bestOrganism.LogFinalOrganism(start, tradOutFile, bestPathFinal)
+
+			return
+
+		} else {
+			pool := selection.CreatePool(population, models.TargetFrequencies)
+
+			// If the generation is 0, there won't be any immigrants
+			// to put in the pool from the channel.
+
+			population = selection.NaturalSelection(pool, population, models.TargetFrequencies)
+
+			if generation%10 == 0 {
+				// Get the new fitness from the best organism.
+				// bestFitness := bestOrganism.Fitness
+
+				// Print the average fitness of the population.
+				avgFitness := utils.CalcAverage(models.GatherFitness(population))
+				fmt.Println("Average fitness:", avgFitness)
+
+				// fmt.Println("Old mutation rate: ", *flags.MutationRate)
+				// // Modify the mutation rate based on the difference.
+				// models.ModifyMutationRate(prevFitness, bestFitness)
+
+				// // Set the previous fitness to the new fitness.
+				// prevFitness = bestFitness
+
+				// fmt.Println("New mutation rate: ", *flags.MutationRate)
+
+				bestPath := utils.NewOutputFile(fmt.Sprintf("traditional/best/%d", generation))
+				err := bestOrganism.LogIntermediateOrganism(generation, start, tradOutFile, bestPath)
+				if err != nil {
+					log.Fatalln(err)
+				}
+
+				if generation >= *flags.GenLimit {
+					models.LogTerminated(tradOutFile)
+				}
+			}
+
+			delFolders(pool, bestOrganism)
+			delFolders(population, bestOrganism)
+		}
+
+	}
 }
 
 func delFolders(o []models.Organism, topOrganism models.Organism) {

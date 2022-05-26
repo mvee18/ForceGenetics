@@ -267,7 +267,7 @@ func ParseOutput(d *Organism, by []byte, derivative int) {
 		fitness = harmFitness + rotFitness
 
 	case 4:
-		if len(result.Fund) == 0 || len(result.Harm) == 0 || len(result.Rots[0]) == 0 {
+		if len(result.LX) == 0 || len(result.Harm) == 0 || len(result.Rots[0]) == 0 {
 			// fmt.Printf("Singular matrix organism, %v\n", d.Path)
 			d.Fitness = 99999.99
 			return
@@ -392,4 +392,15 @@ func LogTerminated(output string) {
 	fmt.Println("Maximum number of generations reached.")
 	os.Exit(0)
 
+}
+
+func ModifyMutationRate(prevFitness, newFitness float64) {
+	percentDiff := math.Abs(newFitness-prevFitness) / prevFitness
+	if percentDiff < 0.05 {
+		*flags.MutationRate = *flags.MutationRate + 0.001
+	} else if percentDiff < 0.001 {
+		*flags.MutationRate = *flags.MutationRate + 0.005
+	} else {
+		*flags.MutationRate = flags.InitialMutationRate
+	}
 }
